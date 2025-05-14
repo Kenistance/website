@@ -1,29 +1,27 @@
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
 from .models import ChatMessage
 from .serializers import ChatMessageSerializer
+import uuid
 
-
-# ChatMessageListCreateView: Used for listing and creating new chat messages
+# List and create chat messages (not tied to specific sessions)
 class ChatMessageListCreateView(generics.ListCreateAPIView):
     queryset = ChatMessage.objects.all()
     serializer_class = ChatMessageSerializer
 
 
-# chat_view: Handle bot responses to user messages
+# Chat bot interaction view — handles new messages
 @api_view(['POST'])
 def chat_view(request):
     user_message = request.data.get("message", "").strip()
-
     if not user_message:
         return Response({"error": "Message is required."}, status=status.HTTP_400_BAD_REQUEST)
 
     message = user_message.lower()
     reply = "I'm not sure how to respond to that yet, but I'm learning!"
 
-    # Expanded bot replies
+    # Custom bot replies
     if "hello" in message or "hi" in message:
         reply = "Hi there! How can I help you today?"
     elif "services" in message:
@@ -67,14 +65,30 @@ def chat_view(request):
     elif "help" in message:
         reply = "Sure, I'm here to help. What would you like to know more about?"
 
-    # Save the chat
+    # Use existing or generate a new session_id
+    session_id = request.data.get("session_id") or str(uuid.uuid4())
+
+    # Save chat to DB
     chat_message = ChatMessage.objects.create(
         user_message=user_message,
-        bot_reply=reply
+        bot_reply=reply,
+        session_id=session_id
     )
 
     serializer = ChatMessageSerializer(chat_message)
     return Response({
         "response": reply,
+        "session_id": session_id,  # Send session ID back to client if new
         "chat": serializer.data
     })
+
+
+# Retrieve full chat history for a session
+@api_view(['GET'])
+def get_chat_history(request, session_id):
+    messages = ChatMessage.objects.filter(session_id=session_id).order_by('timestamp')
+    if not messages.exists():
+        return Response({"error": "No chat found for this session."}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = ChatMessageSerializer(messages, many=True)
+    return Response({"chat_history": serializer.data}, status=status.HTTP_200_OK)

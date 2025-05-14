@@ -1,0 +1,62 @@
+/* EnquiryBox.css */
+.enquiry-container {
+  background-color: white;
+  padding: 20px 25px;
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  width: 100%;
+}
+
+.enquiry-container h2 {
+  color: #0d47a1;
+  margin-bottom: 15px;
+  text-align: center;
+  font-size: 1.5rem;
+}
+
+.enquiry-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.enquiry-form input,
+.enquiry-form textarea {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.enquiry-form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.enquiry-form button {
+  background-color: #0d47a1;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.enquiry-form button:hover {
+  background-color: #0a3677;
+}
+
+.enquiry-form button:disabled {
+  background-color: #7c94b6;
+  cursor: not-allowed;
+}
+
+.enquiry-form p {
+  text-align: center;
+  margin-top: 10px;
+  font-weight: 500;
+}

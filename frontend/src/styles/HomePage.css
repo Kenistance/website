@@ -1,0 +1,169 @@
+/* src/styles/HomePage.css */
+
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: black;
+  overflow-x: hidden;
+}
+
+.background-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.rotating-background {
+  width: 100%;
+  height: 100%;
+  animation: rotateGalaxy 15s infinite;
+  background-size: cover;
+  background-position: center;
+}
+
+@keyframes rotateGalaxy {
+  0% { background-image: url('/assets/planet1.jpg'); }
+  33% { background-image: url('/assets/galaxy.jpg'); }
+  66% { background-image: url('/assets/starscape.jpg'); }
+  100% { background-image: url('/assets/planet1.jpg'); }
+}
+
+.home-header {
+  text-align: center;
+  padding: 100px 20px 60px;
+  color: #00ff88;
+}
+
+.main-title {
+  font-size: 4rem;
+  font-weight: bold;
+  color: #00ff99;
+  text-shadow: 0 0 25px #00ffaa;
+  transition: all 0.3s ease;
+}
+
+.main-title:hover {
+  text-shadow: 0 0 40px #00ffcc;
+  color: #00ffcc;
+}
+
+.subtitle {
+  font-size: 1.6rem;
+  margin-top: 15px;
+  color: #cce;
+  transition: all 0.3s ease;
+}
+
+.subtitle:hover {
+  color: #00ffcc;
+  text-shadow: 0 0 12px #00ffcc;
+}
+
+.services-section {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  color: #00ffcc;
+  margin-bottom: 40px;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 30px;
+  padding: 0 20px;
+}
+
+.service-box {
+  background: linear-gradient(145deg, #1b1f24, #0e0f11);
+  border: 1px solid #1f1f1f;
+  border-radius: 20px;
+  padding: 30px;
+  color: #fff;
+  box-shadow: inset 0 0 30px rgba(0, 255, 204, 0.1), 0 10px 25px rgba(0, 255, 204, 0.2);
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.service-box:hover {
+  transform: scale(1.05) rotateX(3deg) rotateY(3deg);
+  box-shadow: 0 12px 30px rgba(0, 255, 204, 0.4);
+  color: #00ffcc;
+}
+
+.enquiry-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 60px 20px;
+}
+
+.enquiry-box {
+  width: 100%;
+  max-width: 600px;
+  padding: 30px;
+  border-radius: 15px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid #00ff99;
+  box-shadow: 0 0 20px rgba(0, 255, 153, 0.4);
+  color: #00ff99;
+}
+
+.enquiry-box h3 {
+  text-align: center;
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  color: #00ffcc;
+}
+
+.enquiry-box input,
+.enquiry-box textarea {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid #00ff99;
+  border-radius: 10px;
+  color: #00ffcc;
+  font-size: 1rem;
+}
+
+.enquiry-box input:focus,
+.enquiry-box textarea:focus {
+  outline: none;
+  box-shadow: 0 0 12px #00ffcc;
+}
+
+.enquiry-box button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: #00ff99;
+  color: black;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.enquiry-box button:hover {
+  background: #00ffaa;
+  box-shadow: 0 0 20px #00ffaa;
+}
+
+.chatbox-wrapper {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+}

@@ -1,15 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import '../styles/ChatBox.css';
 
 function ChatBox() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const sessionId = "6d6e6c01-a728-4cd9-9ef3-94fe80e52632";
+
+  useEffect(() => {
+    async function fetchChatHistory() {
+      try {
+        const response = await fetch(`/api/chat/chat-history/${sessionId}/`);
+        const data = await response.json();
+        setMessages(data.chat_history);
+      } catch (error) {
+        console.error("Error fetching chat history", error);
+      }
+    }
+    fetchChatHistory();
+  }, [sessionId]);
+
+  const generateBotReply = (userMessage) => {
+    const message = userMessage.toLowerCase();
+    if (message.includes("hello") || message.includes("hi")) {
+      return "Hi there! How can I assist you today?";
+    } else if (message.includes("services")) {
+      return "I offer web development, data analytics, and task automation services.";
+    } else if (message.includes("project")) {
+      return "I’d love to help! What kind of project do you have in mind?";
+    } else if (message.includes("price") || message.includes("cost")) {
+      return "Pricing depends on the project details. Could you share more info?";
+    } else if (message.includes("python")) {
+      return "I specialize in Python for automation and backend development.";
+    } else if (message.includes("thanks") || message.includes("thank you")) {
+      return "You're welcome! Feel free to ask anything else.";
+    } else {
+      return "I'm still learning! Let me know if I can assist you with something else.";
+    }
+  };
 
   const sendMessage = async () => {
     const trimmed = input.trim();
     if (!trimmed) return;
 
-    // Add user's message to the chat box
     setMessages(prev => [...prev, { sender: "You", text: trimmed }]);
     setInput("");
     setLoading(true);
@@ -20,17 +54,13 @@ function ChatBox() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ message: trimmed }) // sending just the message text
+        body: JSON.stringify({ message: trimmed, session_id: sessionId })
       });
 
       const data = await response.json();
+      const botReply = data.response || generateBotReply(trimmed);
+      setMessages(prev => [...prev, { sender: "Bot", text: botReply }]);
 
-      // Check if the response from the server contains the bot's message
-      if (data.response) {
-        setMessages(prev => [...prev, { sender: "Bot", text: data.response }]);
-      } else {
-        setMessages(prev => [...prev, { sender: "Bot", text: "No response received." }]);
-      }
     } catch (err) {
       setMessages(prev => [...prev, { sender: "Bot", text: "⚠️ Could not connect to server." }]);
     }
@@ -39,32 +69,38 @@ function ChatBox() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 w-80 bg-white border shadow rounded p-4 z-50">
-      <h3 className="text-lg font-bold mb-2">💬 Chat With Me</h3>
-      <div className="h-48 overflow-y-auto border p-2 mb-2 rounded bg-gray-50 text-sm">
-        {messages.map((msg, i) => (
-          <div key={i} className="mb-1">
-            <strong className={msg.sender === "You" ? "text-blue-600" : "text-green-600"}>
-              {msg.sender}:
-            </strong> {msg.text}
+    <div className="chatbox-wrapper-fixed">
+      <button className="chatbox-toggle" onClick={() => setIsOpen(!isOpen)}>
+        💬 {isOpen ? "Close Chat" : "Open Chat"}
+      </button>
+
+      {isOpen && (
+        <div className="chatbox-container">
+          <div className="chatbox-header">Chat With Me</div>
+          <div className="chatbox-messages">
+            {messages.map((msg, i) => (
+              <div key={i} className={`chatbox-message ${msg.sender.toLowerCase()}`}>
+                <div className={`chatbox-bubble ${msg.sender.toLowerCase()}`}>{msg.text}</div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <div className="flex gap-2">
-        <input
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          className="flex-1 border p-2 rounded"
-          placeholder="Type a message..."
-        />
-        <button
-          onClick={sendMessage}
-          className="bg-blue-600 text-white px-3 rounded disabled:opacity-50"
-          disabled={loading}
-        >
-          {loading ? "..." : "Send"}
-        </button>
-      </div>
+          <div className="chatbox-input-area">
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              className="chatbox-input"
+              placeholder="Type a message..."
+            />
+            <button
+              onClick={sendMessage}
+              className="chatbox-button"
+              disabled={loading}
+            >
+              {loading ? "..." : "Send"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

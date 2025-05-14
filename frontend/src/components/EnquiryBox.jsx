@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import '../styles/EnquiryBox.css';
+
 
 function EnquiryBox() {
   const [formData, setFormData] = useState({
@@ -49,9 +51,9 @@ function EnquiryBox() {
   };
 
   return (
-    <div className="mt-8 border p-4 rounded shadow max-w-md mx-auto">
+    <div className="enquiry-container">
       <h2 className="text-xl font-bold mb-2">Make an Enquiry</h2>
-      <form onSubmit={handleSubmit} className="space-y-2">
+      <form onSubmit={handleSubmit} className="enquiry-form">
         <input
           type="text"
           name="name"
