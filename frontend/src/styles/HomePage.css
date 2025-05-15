@@ -28,7 +28,7 @@ body, html {
   height: 100%;
   background-size: cover;
   background-position: center;
-  transition: background-image 1s ease-in-out;
+  transition: background-image 10s ease-in-out;
 }
 
 /* Header */
