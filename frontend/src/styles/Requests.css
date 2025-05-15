@@ -1,0 +1,56 @@
+/* Requests.css */
+
+.requests-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 1.5rem 2rem;
+    background: #fafafa;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #222;
+  }
+  
+  .requests-container h1 {
+    font-size: 2.25rem; /* text-2xl */
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    color: #0f172a; /* a dark blue/gray */
+    text-align: center;
+  }
+  
+  .requests-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .request-item {
+    border: 1.5px solid #e2e8f0;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    background-color: #ffffff;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .request-item:hover {
+    box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+  }
+  
+  .request-item h2 {
+    font-size: 1.25rem; /* text-xl */
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #1e40af; /* a strong blue */
+  }
+  
+  .request-item p {
+    font-size: 1rem;
+    color: #4b5563; /* gray-600 */
+  }
+  
+  .request-item strong {
+    color: #2563eb; /* blue-600 */
+  }
+  

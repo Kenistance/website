@@ -6,16 +6,24 @@ function ChatBox() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+
+  // Keep your sessionId or generate dynamically as needed
   const sessionId = "6d6e6c01-a728-4cd9-9ef3-94fe80e52632";
 
   useEffect(() => {
     async function fetchChatHistory() {
       try {
-        const response = await fetch(`/api/chat/chat-history/${sessionId}/`);
-        const data = await response.json();
-        setMessages(data.chat_history);
+        console.log(`Fetching chat history for session: ${sessionId}`);
+        const response = await fetch(`http://127.0.0.1:8000/api/chat/chat-history/${sessionId}/`);
+        const text = await response.text();
+        console.log("Raw response text:", text);
+
+        const data = JSON.parse(text);
+        console.log("Parsed chat history data:", data);
+
+        setMessages(data.chat_history || []);
       } catch (error) {
-        console.error("Error fetching chat history", error);
+        console.error("Error fetching chat history:", error);
       }
     }
     fetchChatHistory();
@@ -49,6 +57,7 @@ function ChatBox() {
     setLoading(true);
 
     try {
+      console.log("Sending message to backend:", trimmed);
       const response = await fetch("http://127.0.0.1:8000/api/chat/", {
         method: "POST",
         headers: {
@@ -58,10 +67,12 @@ function ChatBox() {
       });
 
       const data = await response.json();
+      console.log("Received response from backend:", data);
+
       const botReply = data.response || generateBotReply(trimmed);
       setMessages(prev => [...prev, { sender: "Bot", text: botReply }]);
-
     } catch (err) {
+      console.error("Error sending message:", err);
       setMessages(prev => [...prev, { sender: "Bot", text: "⚠️ Could not connect to server." }]);
     }
 
@@ -78,11 +89,18 @@ function ChatBox() {
         <div className="chatbox-container">
           <div className="chatbox-header">Chat With Me</div>
           <div className="chatbox-messages">
-            {messages.map((msg, i) => (
-              <div key={i} className={`chatbox-message ${msg.sender.toLowerCase()}`}>
-                <div className={`chatbox-bubble ${msg.sender.toLowerCase()}`}>{msg.text}</div>
-              </div>
-            ))}
+            {messages
+              .filter(msg => msg.text && msg.text.trim() !== "")
+              .map((msg, i) => {
+                const sender = (msg.sender || "bot").toLowerCase();
+                return (
+                  <div key={i} className={`chatbox-message ${sender}`}>
+                    <div className={`chatbox-bubble ${sender}`}>
+                      {msg.text}
+                    </div>
+                  </div>
+                );
+              })}
           </div>
           <div className="chatbox-input-area">
             <input
@@ -90,6 +108,7 @@ function ChatBox() {
               onChange={e => setInput(e.target.value)}
               className="chatbox-input"
               placeholder="Type a message..."
+              onKeyDown={e => { if (e.key === 'Enter') sendMessage(); }}
             />
             <button
               onClick={sendMessage}

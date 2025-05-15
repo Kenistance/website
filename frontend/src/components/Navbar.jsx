@@ -5,7 +5,7 @@ import '../styles/Navbar.css';
 function Navbar() {
   return (
     <nav className="navbar">
-      <div className="navbar-logo">MySite</div>
+      <div className="navbar-logo">Code 254</div>
       <ul className="navbar-links">
         <li><Link to="/" className="nav-link">Home</Link></li>
         <li><Link to="/portfolio" className="nav-link">Portfolio</Link></li>

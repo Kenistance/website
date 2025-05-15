@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import '../styles/EnquiryBox.css';
 
-
 function EnquiryBox() {
   const [formData, setFormData] = useState({
     name: '',
@@ -14,18 +13,22 @@ function EnquiryBox() {
   const [responseMessage, setResponseMessage] = useState('');
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+    console.log(`Input changed: ${name} = ${value}`);  // Log input changes
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: value
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Form submit triggered');
     setSubmitting(true);
     setResponseMessage('');
 
     try {
+      console.log('Sending data:', formData);  // Log data being sent
       const response = await fetch('http://127.0.0.1:8000/api/enquiry/submit/', {
         method: 'POST',
         headers: {
@@ -35,9 +38,10 @@ function EnquiryBox() {
       });
 
       const data = await response.json();
+      console.log('Response from server:', data);
 
       if (response.ok) {
-        setResponseMessage('✅ Enquiry submitted successfully!');
+        setResponseMessage(' Enquiry submitted successfully!');
         setFormData({ name: '', email: '', phone: '', message: '' });
       } else {
         setResponseMessage('❌ Error: ' + JSON.stringify(data));

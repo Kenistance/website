@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import styles from '../styles/Portfolio.module.css'; // use module
 
 function Portfolio() {
   const [projects, setProjects] = useState([]);
@@ -11,18 +12,18 @@ function Portfolio() {
   }, []);
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">My Portfolio</h1>
+    <div className={styles.container}>
+      <h1 className={styles.title}>My Portfolio</h1>
       {projects.length === 0 ? (
-        <p>No projects found.</p>
+        <p className={styles.message}>No projects found.</p>
       ) : (
-        <ul className="space-y-4">
+        <ul className={styles.projectList}>
           {projects.map(project => (
-            <li key={project.id} className="border p-4 rounded shadow">
-              <h2 className="text-xl font-semibold">{project.title}</h2>
+            <li key={project.id} className={styles.projectItem}>
+              <h2 className={styles.projectTitle}>{project.title}</h2>
               <p>{project.description}</p>
               {project.image_url && (
-                <img src={project.image_url} alt={project.title} className="mt-2 max-w-xs" />
+                <img src={project.image_url} alt={project.title} className={styles.projectImage} />
               )}
             </li>
           ))}

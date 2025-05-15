@@ -1,0 +1,49 @@
+.container {
+    padding: 1.5rem;
+    background-color: #ffffff;
+    min-height: 100vh;
+  }
+  
+  .title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #1f2937;
+    text-align: center;
+  }
+  
+  .message {
+    color: #6b7280;
+    text-align: center;
+  }
+  
+  .projectList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 1rem;
+  }
+  
+  .projectItem {
+    border: 1px solid #e5e7eb;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background-color: #f9fafb;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+  
+  .projectTitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #4f46e5;
+  }
+  
+  .projectImage {
+    margin-top: 0.5rem;
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.25rem;
+  }
+  
