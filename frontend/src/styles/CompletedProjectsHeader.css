@@ -1,0 +1,20 @@
+.completed-projects-title {
+    text-align: center;
+    font-size: 4rem;
+    font-weight: 900;
+    color: #f2192b;
+    margin-top: 2rem;
+    transition: all 0.3s ease-in-out;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+    cursor: pointer;
+  }
+  
+  .completed-projects-title:hover {
+    color: #e7e416;
+    text-shadow:
+      0 0 15px hsla(82, 76%, 40%, 0.555),
+      0 0 25px rgba(45, 202, 58, 0.5),
+      0 0 35px rgba(174, 202, 35, 0.554);
+  }
+  

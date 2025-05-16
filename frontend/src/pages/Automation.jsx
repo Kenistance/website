@@ -79,10 +79,12 @@ function Automation() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Automation Services</h1>
-      <p className={styles.subtext}>
-        We offer a variety of Python-based automation services to save you time, reduce manual effort, and improve productivity.
-      </p>
+      <div className={styles.introBox}>
+        <h1 className={styles.title}>Automation Services</h1>
+        <p className={styles.subtext}>
+          We offer a variety of Python-based automation services to save you time, reduce manual effort, and improve productivity.
+        </p>
+      </div>
       <div className={styles.grid}>
         {services.map((service, index) => (
           <div key={index} className={styles.cube}>

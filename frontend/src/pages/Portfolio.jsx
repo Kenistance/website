@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import TunnelGridBackground from '../components/TunnelGridBackground';
-import CompletedProjectPrism from '../components/CompletedProjectPrism';
+import CompletedProjectsHeader from '../components/CompletedProjectsHeader';
 import styles from '../styles/Portfolio.module.css';
 
 function Portfolio() {
@@ -18,10 +18,9 @@ function Portfolio() {
       <TunnelGridBackground />
 
       <div className="relative z-10 p-8 max-w-5xl mx-auto text-white">
-        <h1 className="text-4xl font-bold mb-6 drop-shadow-lg">Completed Projects</h1>
 
-        {/* 3D Prism animated text box for completed projects */}
-        <CompletedProjectPrism />
+        {/* 🚀 Prism with embedded text inside it */}
+          <CompletedProjectsHeader /> 
 
         {projects.length === 0 ? (
           <p className="text-lg">No projects found.</p>

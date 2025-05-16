@@ -13,6 +13,7 @@ urlpatterns = [
     path('api/portfolio/', include('portfolio.urls')),
     path('api/enquiry/', include('enquiry.urls')), 
     path('api/chat/', include('chat.urls')),
+    path('api/requests/', include('project_requests.urls')),
 ]
 
 # Serve static files during development (like favicon.ico)

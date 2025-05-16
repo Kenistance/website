@@ -72,8 +72,8 @@ body, html {
 }
 
 .section-title {
-  font-size: 2.5rem;
-  color: #00ffcc;
+  font-size: 5.5rem;
+  color: #eaf913;
   margin-bottom: 40px;
   text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
 }
@@ -208,7 +208,7 @@ body, html {
   height: 100%;
   position: relative;
   transform-style: preserve-3d;
-  animation: rotateCube 120s infinite linear;
+  animation: rotateCube 140s infinite linear;
   transition: animation-duration 0.3s ease;
 }
 

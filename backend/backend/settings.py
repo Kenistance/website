@@ -42,10 +42,11 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
 
-    # Your apps
+    # apps
     'portfolio',
     'enquiry',
     'chat',
+    'project_requests',
 ]
 
 MIDDLEWARE = [
