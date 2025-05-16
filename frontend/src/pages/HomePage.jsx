@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import EnquiryBox from '../components/EnquiryBox';
 import ChatBox from '../components/ChatBox';
-import Footer from '../components/Footer';
 import '../styles/HomePage.css';
 
 function HomePage() {
@@ -41,7 +40,7 @@ function HomePage() {
         </header>
 
         <section className="services-section">
-          <h2 className="section-title">Services Rendered</h2>
+          <h2 className="section-title"> We Offer Exceptional Services When It Comes to...</h2>
           <div className="services-grid">
             {/* Cube 1 - Automation */}
             <div className="cube-wrapper">
@@ -125,7 +124,6 @@ function HomePage() {
           <ChatBox />
         </div>
       </div>
-      <Footer />
     </>
   );
 }

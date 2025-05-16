@@ -1,0 +1,99 @@
+/* Company.css */
+
+.company-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    font-family: 'Inter', 'Roboto', 'Segoe UI', sans-serif;
+    color: #222;
+    background-color: #f5f7fa;
+  }
+  
+  /* Each main section as a “card” */
+  .company-page section {
+    background-color: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    padding: 32px;
+    margin-bottom: 40px;
+  }
+  
+  /* Headings */
+  .company-page h2 {
+    font-size: 28px;
+    color: #0d47a1; /* Dark blue */
+    margin-bottom: 24px;
+    border-bottom: 2px solid #1976d2; /* Bright tech blue underline */
+    padding-bottom: 8px;
+    font-weight: 600;
+  }
+  
+  .company-page h3 {
+    font-size: 22px;
+    margin-top: 32px;
+    margin-bottom: 16px;
+    color: #1976d2;
+    font-weight: 600;
+  }
+  
+  /* Paragraphs and Lists */
+  .company-page p,
+  .company-page ul {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #222;
+  }
+  
+  .company-page ul {
+    padding-left: 20px;
+    margin-top: 12px;
+  }
+  
+  .company-page ul li {
+    margin-bottom: 10px;
+  }
+  
+  /* Links */
+  .company-page a {
+    color: #1976d2;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease;
+  }
+  
+  .company-page a:hover,
+  .company-page a:focus {
+    border-bottom: 1px solid #1976d2;
+    outline: none;
+  }
+  
+  /* Special class for sitemap list */
+  .sitemap-list {
+    list-style: none;
+    padding-left: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  
+  .sitemap-list li {
+    flex: 1 1 40%;
+    min-width: 160px;
+  }
+  
+  @media (max-width: 600px) {
+    .company-page {
+      padding: 20px 12px;
+    }
+  
+    .company-page section {
+      padding: 24px 20px;
+    }
+  
+    .sitemap-list li {
+      flex: 1 1 100%;
+      min-width: auto;
+    }
+  }
+  
