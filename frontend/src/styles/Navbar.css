@@ -5,18 +5,20 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background: linear-gradient(90deg, #064e03 , #9aa68f);
+  background: linear-gradient(90deg, #064e03, #9aa68f);
+  background-color: #064e03;  /* fallback solid color for better reliability */
   box-shadow: 0 4px 12px rgba(190, 45, 45, 0.2);
   position: sticky;
   top: 0;
   z-index: 999;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 60px; /* ensure navbar height is consistent */
 }
 
 .navbar-logo {
   font-size: 2.8rem;
   font-weight: 900;
-  color: #b8ff29dd; 
+  color: #b8ff29dd;
   letter-spacing: 2px;
   user-select: none;
   cursor: default;
@@ -31,6 +33,10 @@
   list-style: none;
   display: flex;
   gap: 2rem;
+  justify-content: flex-end; /* explicitly align links to right */
+  flex-grow: 1; /* take available space */
+  margin: 0; /* reset default list margin */
+  padding: 0; /* reset default list padding */
 }
 
 .navbar-links li {
@@ -38,7 +44,8 @@
 }
 
 .nav-link {
-  color: #ffffffcc; /* soft white */
+  color: #ffffff; /* full white for better visibility */
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.7); /* subtle shadow for contrast */
   text-decoration: none;
   font-weight: 600;
   font-size: 1.1rem;
@@ -46,6 +53,8 @@
   transition: color 0.3s ease;
   letter-spacing: 0.5px;
   border-bottom: 2px solid transparent;
+  position: relative;
+  z-index: 0;
 }
 
 .nav-link:hover {
@@ -81,12 +90,6 @@
     gap: 1rem;
     margin-top: 0.5rem;
   }
-}
-
-.nav-link {
-  transition: all 0.3s ease;
-  position: relative;
-  z-index: 0;
 }
 
 .nav-link.active {

@@ -56,6 +56,11 @@
   gap: 2.5rem;
   perspective: 1200px;
   justify-items: center; /* center cubes horizontally */
+  padding-left: 2rem;    /* Added: left padding */
+  padding-right: 2rem;   /* Added: right padding */
+  max-width: 1200px;     /* Added: optional max width */
+  margin-left: auto;     /* Added: center horizontally */
+  margin-right: auto;
 }
 
 .cube {
