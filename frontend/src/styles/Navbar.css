@@ -9,10 +9,11 @@
   box-shadow: 0 4px 12px rgba(190, 45, 45, 0.2);
   position: sticky;
   top: 0;
-  z-index: 1000; /* Increased z-index to ensure visibility */
+  z-index: 1100; /* Increased z-index to ensure visibility above backgrounds */
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   min-height: 60px;
   width: 100%; /* Ensure full width */
+  position: relative; /* Establish stacking context */
 }
 
 .navbar-logo {
