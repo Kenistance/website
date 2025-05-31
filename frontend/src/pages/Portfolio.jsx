@@ -7,7 +7,7 @@ function Portfolio() {
   const [projects, setProjects] = useState([]);
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/portfolio/')
+    fetch('https://website3-ho1y.onrender.com/api/portfolio/')
       .then(response => response.json())
       .then(data => setProjects(data))
       .catch(error => console.error('Error fetching projects:', error));

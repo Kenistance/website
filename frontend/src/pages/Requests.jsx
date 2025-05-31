@@ -5,7 +5,7 @@ function Requests() {
   const [projects, setProjects] = useState([]);
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/requests/requests/')
+    fetch('https://website3-ho1y.onrender.com/api/requests/requests/')
       .then(res => res.json())
       .then(data => setProjects(data))
       .catch(err => console.error('Failed to fetch project requests:', err));
