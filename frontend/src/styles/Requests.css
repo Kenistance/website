@@ -1,14 +1,20 @@
+/* Requests.css - Fixed for deployment */
 .requests-container {
   padding: 2rem;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%) !important;
+  color: #ffffff;
 }
 
 .page-title {
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: bold;
   margin-bottom: 2rem;
   text-align: center;
-  color: #21d418;
+  color: #21d418 !important;
+  text-shadow: 0 0 10px rgba(33, 212, 24, 0.5);
+  padding-top: 2rem;
 }
 
 .requests-list {
@@ -18,22 +24,44 @@
   gap: 2rem;
   padding: 0;
   max-width: 800px;
-  margin: 0 auto;
+  margin: 0 auto 3rem auto;
 }
 
-.request-card.flame {
-  background: radial-gradient(circle at top, #21d418 0%, #0e3c1b 100%);
+.request-card {
+  background: radial-gradient(circle at top, #21d418 0%, #0e3c1b 100%) !important;
   border-radius: 60% / 25%;
   box-shadow: 0 0 12px #21d418, 0 0 24px #ff6f00, 0 0 36px #ff0080;
   animation: flamePulse 3s infinite ease-in-out;
-  color: #fff;
+  color: #fff !important;
   padding: 2rem;
   text-align: center;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 2px solid rgba(33, 212, 24, 0.3);
 }
 
-.request-card.flame:hover {
-  transform: scale(1.05);
+.request-card:hover {
+  transform: scale(1.05) translateY(-5px);
+  box-shadow: 0 0 20px #21d418, 0 0 35px #ff6f00, 0 0 50px #ff0080;
+}
+
+.request-card h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  color: #ffffff !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.request-card p {
+  font-size: 1.1rem;
+  color: #f0f0f0 !important;
+  margin: 0;
+}
+
+.request-card strong {
+  color: #21d418 !important;
+  font-weight: 700;
+  text-shadow: 0 0 5px rgba(33, 212, 24, 0.7);
 }
 
 @keyframes flamePulse {
@@ -42,50 +70,117 @@
     box-shadow: 0 0 12px #21d418, 0 0 24px #ff6f00, 0 0 36px #ff0080;
   }
   50% {
-    transform: scale(1.05);
+    transform: scale(1.02);
     box-shadow: 0 0 20px #38ff6e, 0 0 30px #ffa500, 0 0 50px #ff1493;
   }
 }
 
 .book-btn {
-  background: #d60808;
-  color: white;
-  font-size: 2rem;
-  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #d60808, #ff1744) !important;
+  color: white !important;
+  font-size: 1.8rem;
+  font-weight: 700;
+  padding: 1rem 2rem;
   border: none;
-  border-radius: 30px;
+  border-radius: 50px;
   margin: 2rem auto;
   display: block;
   cursor: pointer;
-  transition: background 0.3s ease, transform 0.2s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(214, 8, 8, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .book-btn:hover {
-  background: #e00b0b;
-  transform: scale(1.05);
+  background: linear-gradient(135deg, #ff1744, #d60808) !important;
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 6px 25px rgba(214, 8, 8, 0.6);
+}
+
+.book-btn:active {
+  transform: scale(0.98);
 }
 
 .selling-point {
   margin-top: 3rem;
-  padding: 2rem;
-  background: linear-gradient(145deg, #0e3c1b, #d926a7);
+  padding: 2.5rem;
+  background: linear-gradient(145deg, #0e3c1b, #d926a7) !important;
   border-radius: 20px;
-  color: #ffffff;
+  color: #ffffff !important;
   text-align: center;
-  box-shadow: 0 0 20px rgba(33, 212, 24, 0.5);
+  box-shadow: 0 0 30px rgba(33, 212, 24, 0.3), inset 0 0 50px rgba(217, 38, 167, 0.1);
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
+  border: 1px solid rgba(33, 212, 24, 0.2);
 }
 
 .selling-point h2 {
-  font-size: 1.8rem;
-  margin-bottom: 1rem;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
   font-weight: 700;
-  color: #a0ff60;
+  color: #a0ff60 !important;
+  text-shadow: 0 0 10px rgba(160, 255, 96, 0.5);
 }
 
 .selling-point p {
+  font-size: 1.2rem;
+  line-height: 1.8;
+  color: #f0f0f0 !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .requests-container {
+    padding: 1rem;
+  }
+  
+  .page-title {
+    font-size: 2rem;
+    padding-top: 1rem;
+  }
+  
+  .request-card {
+    padding: 1.5rem;
+    border-radius: 50% / 20%;
+  }
+  
+  .book-btn {
+    font-size: 1.5rem;
+    padding: 0.8rem 1.5rem;
+  }
+  
+  .selling-point {
+    padding: 2rem;
+    margin-top: 2rem;
+  }
+  
+  .selling-point h2 {
+    font-size: 1.6rem;
+  }
+  
+  .selling-point p {
+    font-size: 1rem;
+  }
+}
+
+/* Loading state for when requests are being fetched */
+.loading {
+  text-align: center;
+  color: #21d418;
+  font-size: 1.2rem;
+  padding: 2rem;
+}
+
+/* Empty state */
+.no-requests {
+  text-align: center;
+  color: #a0ff60;
   font-size: 1.1rem;
-  line-height: 1.6;
+  padding: 3rem;
+  background: rgba(33, 212, 24, 0.1);
+  border-radius: 15px;
+  border: 1px dashed #21d418;
 }
