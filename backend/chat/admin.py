@@ -1,3 +1,4 @@
 from django.contrib import admin
+from .models import ChatMessage  # import the correct model name
 
-# Register your models here.
+admin.site.register(ChatMessage)  # register the model
