@@ -14,7 +14,7 @@ function ChatBox() {
   useEffect(() => {
     async function fetchChatHistory() {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/chat/chat-history/${sessionId}/`);
+        const response = await fetch(`http://website3-ho1y.onrender.com/api/chat/chat-history/${sessionId}/`);
         const data = await response.json();
         setMessages(data.chat_history || []);
       } catch (error) {
@@ -34,7 +34,7 @@ function ChatBox() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/chat/", {
+      const response = await fetch("http://website3-ho1y.onrender.com/api/chat/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

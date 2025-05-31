@@ -29,7 +29,7 @@ function EnquiryBox() {
 
     try {
       console.log('Sending data:', formData);  // Log data being sent
-      const response = await fetch('http://127.0.0.1:8000/api/enquiry/submit/', {
+      const response = await fetch('http://website3-ho1y.onrender.com/api/enquiry/submit/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
