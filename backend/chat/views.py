@@ -559,7 +559,7 @@ class ConversationalBot:
         elif intent_type == "thanks":
             return "You're very welcome! I'm really glad I could help. Is there anything else you'd like to explore about our services?"
         elif intent_type == "goodbye":
-            return "Thank you for the great conversation! Feel free to reach out anytime if you have more questions. Have a wonderful day!"
+            return "Thank you for the great conversation! Feel free to reach out anytime if you have more questions. Have a wonderful time!"
         elif intent_type == "industry":
             return self.handle_industry_inquiry(intent_value, message, context)
         elif intent_type == "service":

@@ -5,12 +5,19 @@ import styles from '../styles/Portfolio.module.css';
 
 function Portfolio() {
   const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true); // ✅ Added loading state
 
   useEffect(() => {
     fetch('https://website3-ho1y.onrender.com/api/portfolio/')
       .then(response => response.json())
-      .then(data => setProjects(data))
-      .catch(error => console.error('Error fetching projects:', error));
+      .then(data => {
+        setProjects(data);
+        setLoading(false); // ✅ Stop loading after data arrives
+      })
+      .catch(error => {
+        console.error('Error fetching projects:', error);
+        setLoading(false); // ✅ Also stop loading on error
+      });
   }, []);
 
   return (
@@ -18,12 +25,13 @@ function Portfolio() {
       <TunnelGridBackground />
 
       <div className="relative z-10 p-8 max-w-5xl mx-auto text-white">
+        <CompletedProjectsHeader />
 
-        {/* 🚀 Prism with embedded text inside it */}
-          <CompletedProjectsHeader /> 
-
-        {projects.length === 0 ? (
-          <p className="text-lg">No projects found.</p>
+        {/* ⏳ Show while loading */}
+        {loading ? (
+          <p className="text-lg animate-pulse">Loading projects...</p>
+        ) : projects.length === 0 ? (
+          <p className="text-lg text-red-300">No projects found.</p>
         ) : (
           <ul className={styles.projectList}>
             {projects.map(project => (

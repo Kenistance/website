@@ -94,22 +94,39 @@ function HomePage() {
 
       <div className="home-container">
         <header className="home-header">
-          <h1 className="main-title">Welcome to Code 254</h1>
-          <p className="subtitle">We are the Africa and World's Best</p>
+          <h1 className="main-title">Code254: Smart Digital Solutions</h1>
+          <p className="subtitle">We build custom websites, AI tools, Automation tools with python and data systems to solve real problems — for Africa and beyond.</p>
         </header>
 
         <section className="services-section">
-          <h2 className="section-title">We Offer Exceptional Services When It Comes to...</h2>
+          <h2 className="section-title">We Offer Exceptional Services In...</h2>
           <div className="services-grid">
             {services.map((service, i) => (
               <Cube key={i} title={service.title} details={service.details} />
             ))}
           </div>
+
+          {/* New plain service summaries */}
+          <div className="service-summary-box">
+            {services.map((service, i) => (
+              <div key={i} className="service-summary-item">
+                <h3>{service.title}</h3>
+                <ul>
+                  {service.details.map((point, j) => (
+                    <li key={j}>{point}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </section>
 
-        <div className="enquiry-wrapper">
+        {/* Enquiry section with improved messaging */}
+        <section className="enquiry-wrapper">
+          <h2 className="section-title">Let's Talk About Your Project</h2>
+          <p className="subtitle">Tell us what you're looking for — we will respond within 24 hours.</p>
           <EnquiryBox />
-        </div>
+        </section>
 
         <div className="chatbox-wrapper">
           <ChatBox />

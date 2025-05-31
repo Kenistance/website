@@ -1,19 +1,30 @@
-/* Navbar.css - Fixed for deployment */
+/* Navbar.css - Final polished for deployment */
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
+  
   background: linear-gradient(90deg, #064e03, #9aa68f);
-  background-color: #064e03 !important;  /* Force fallback with !important */
+  background-color: #064e03 !important;  /* Force fallback solid background */
+  
   box-shadow: 0 4px 12px rgba(190, 45, 45, 0.2);
+  
   position: sticky;
   top: 0;
-  z-index: 1100; /* Increased z-index to ensure visibility above backgrounds */
+  z-index: 1100; /* Ensure visibility */
+  
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   min-height: 60px;
-  width: 100%; /* Ensure full width */
+  width: 100%;
+  
   position: relative; /* Establish stacking context */
+  
+  /* Added explicit opaque background fallback */
+  /* Fallback for older browsers */
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
 }
 
 .navbar-logo {
@@ -58,6 +69,7 @@
   position: relative;
   z-index: 1;
   display: inline-block; /* Ensure proper display */
+  white-space: nowrap; /* Prevent link wrapping */
 }
 
 .nav-link:hover {
