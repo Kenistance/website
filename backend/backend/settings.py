@@ -123,7 +123,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CORS settings - allow your React dev server origin here
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://website-git-main-kenistances-projects.vercel.app"
+    "https://website-git-main-kenistances-projects.vercel.app",
+    "https://website-bv36edoeb-kenistances-projects.vercel.app"
 # Change if React runs on different port or add more URLs
 ]
 
