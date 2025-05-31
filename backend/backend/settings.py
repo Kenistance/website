@@ -122,7 +122,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS settings - allow your React dev server origin here
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # Change if React runs on different port or add more URLs
+    "http://localhost:5173",
+    "https://website-gray-nine-14.vercel.app"
+# Change if React runs on different port or add more URLs
 ]
 
 # Email settings for enquiry notifications
