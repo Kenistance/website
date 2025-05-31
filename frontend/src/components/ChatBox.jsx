@@ -6,11 +6,10 @@ function ChatBox() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);  // NEW
 
-  // You can generate a persistent sessionId per user (localStorage, cookies, etc.)
   const sessionId = "6d6e6c01-a728-4cd9-9ef3-94fe80e52632";
 
-  // Load chat history on open or sessionId change
   useEffect(() => {
     async function fetchChatHistory() {
       try {
@@ -28,7 +27,6 @@ function ChatBox() {
     const trimmed = input.trim();
     if (!trimmed) return;
 
-    // Add user's message to chat
     setMessages(prev => [...prev, { sender: "You", text: trimmed }]);
     setInput("");
     setLoading(true);
@@ -36,15 +34,11 @@ function ChatBox() {
     try {
       const response = await fetch("https://website3-ho1y.onrender.com/api/chat/", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: trimmed, session_id: sessionId })
       });
 
       const data = await response.json();
-
-      // Use backend response only
       const botReply = data.response || "Sorry, I didn't get that.";
       setMessages(prev => [...prev, { sender: "Bot", text: botReply }]);
     } catch (err) {
@@ -62,8 +56,18 @@ function ChatBox() {
       </button>
 
       {isOpen && (
-        <div className="chatbox-container">
-          <div className="chatbox-header">Chat With Me</div>
+        <div className={`chatbox-container ${isExpanded ? 'expanded' : ''}`}>
+          <div className="chatbox-header">
+            Chat With Me
+            <button
+              className="chatbox-expand-toggle"
+              onClick={() => setIsExpanded(prev => !prev)}
+              style={{ float: "right" }}
+            >
+              {isExpanded ? "⇩ Collapse" : "⇧ Expand"}
+            </button>
+          </div>
+
           <div className="chatbox-messages">
             {messages
               .filter(msg => msg.text && msg.text.trim() !== "")
@@ -78,6 +82,7 @@ function ChatBox() {
                 );
               })}
           </div>
+
           <div className="chatbox-input-area">
             <input
               value={input}

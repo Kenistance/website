@@ -38,6 +38,13 @@
   flex-direction: column;
   overflow: hidden;
   color: #e0fdfd;
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+/* Expanded Chat Container */
+.chatbox-container.expanded {
+  width: 600px;
+  max-height: 600px;
 }
 
 /* Header */
@@ -49,6 +56,26 @@
   font-weight: bold;
   font-size: 1rem;
   text-shadow: 0 0 10px #00ffaa;
+  position: relative;
+}
+
+/* Expand/Collapse Toggle Button */
+.chatbox-expand-toggle {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  background: none;
+  border: none;
+  color: #00ffaa;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.3s ease;
+}
+
+.chatbox-expand-toggle:hover {
+  color: #ffffff;
 }
 
 /* Message area */
