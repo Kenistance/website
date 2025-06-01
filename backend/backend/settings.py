@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'enquiry',
     'chat',
     'project_requests',
+    'payments',
 ]
 
 MIDDLEWARE = [
@@ -137,3 +138,10 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+
+STRIPE_SECRET_KEY = 'your_stripe_secret_key'
+MPESA_API_URL = 'https://api.safaricom.co.ke/mpesa'  # example URL
+MPESA_API_TOKEN = 'your_mpesa_access_token'
+MEDIA_ROOT = BASE_DIR / 'media'  # if not set already

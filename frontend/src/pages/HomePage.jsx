@@ -122,7 +122,7 @@ function HomePage() {
         </section>
 
         {/* Enquiry section with improved messaging */}
-        <section className="enquiry-wrapper">
+        <section id="enquiry" className="enquiry-wrapper">
           <h2 className="section-title">Let's Talk About Your Project</h2>
           <p className="subtitle">Tell us what you're looking for — we will respond within 24 hours.</p>
           <EnquiryBox />
