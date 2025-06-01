@@ -42,11 +42,23 @@ function Footer() {
         <div className="footer-section">
           <h3>Connect</h3>
           <div className="footer-socials">
-            <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer"><i className="fab fa-facebook-f"></i></a>
-            <a href="https://web.whatsapp.com/" target="_blank" rel="noopener noreferrer"><i className="fab fa-whatsapp"></i></a>
+            <a href="https://www.facebook.com/code254" target="_blank" rel="noopener noreferrer"><i className="fab fa-facebook-f"></i></a>
+            <a
+              href="https://wa.me/254706776303?text=Hello%20Code%20254"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <i className="fab fa-whatsapp"></i>
+            </a>
             <a href="https://twitter.com/" target="_blank" rel="noopener noreferrer"><i className="fab fa-twitter"></i></a>
             <a href="https://www.snapchat.com/" target="_blank" rel="noopener noreferrer"><i className="fab fa-snapchat-ghost"></i></a>
-            <a href="https://www.tiktok.com/" target="_blank" rel="noopener noreferrer"><i className="fab fa-tiktok"></i></a>
+            <a
+              href="https://www.tiktok.com/@codeplus254"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <i className="fab fa-tiktok"></i>
+            </a>
           </div>
         </div>
       </div>
