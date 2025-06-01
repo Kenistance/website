@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from portfolio.models import Project
 from .utils import create_stripe_checkout_session, create_mpesa_payment_request
 from .serializers import PaymentSerializer
@@ -77,3 +77,36 @@ class MpesaPaymentRequestView(APIView):
             response_data['payment'] = serializer.data
 
         return Response(response_data)
+
+
+class MpesaCallbackView(APIView):
+    permission_classes = [AllowAny]  # Safely allow external API (e.g. Safaricom) to POST
+
+    def post(self, request):
+        callback_data = request.data
+
+        transaction_id = callback_data.get('transaction_id')
+        status = callback_data.get('status')
+        metadata = callback_data.get('metadata', {})
+        project_id = metadata.get('project_id')
+        user_id = metadata.get('user_id')
+
+        try:
+            payment = Payment.objects.get(
+                transaction_id=transaction_id,
+                project_id=project_id,
+                user_id=user_id,
+                method='mpesa'
+            )
+        except Payment.DoesNotExist:
+            return Response({"error": "Payment record not found"}, status=404)
+
+        if status == 'success':
+            payment.status = 'completed'
+        elif status == 'failed':
+            payment.status = 'failed'
+        else:
+            payment.status = 'unknown'
+
+        payment.save()
+        return Response({"message": "Callback processed successfully"})

@@ -19,8 +19,8 @@ def create_stripe_checkout_session(project, user):
                 'quantity': 1,
             }],
             mode='payment',
-            success_url='https://yourfrontend.com/payment-success?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url='https://yourfrontend.com/payment-cancel',
+            success_url='https://website-git-main-kenistances-projects.vercel.app/payment-success?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url='https://website-git-main-kenistances-projects.vercel.app/payment-cancel',
             metadata={'project_id': project.id, 'user_id': user.id}
         )
         return session.url
@@ -39,7 +39,7 @@ def create_mpesa_payment_request(phone_number, amount, project_id, user_id):
         'amount': amount,
         'project_id': project_id,
         'user_id': user_id,
-        'callback_url': 'https://yourbackend.com/payments/mpesa-callback/'
+        'callback_url': 'https://website3-ho1y.onrender.com/payments/mpesa-callback/'
     }
     response = requests.post(url, json=data, headers=headers)
     return response.json()
