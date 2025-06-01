@@ -128,6 +128,16 @@ CORS_ALLOWED_ORIGINS = [
     "https://website-bv36edoeb-kenistances-projects.vercel.app"
 # Change if React runs on different port or add more URLs
 ]
+CORS_ALLOW_CREDENTIALS = True
+
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://website-git-main-kenistances-projects.vercel.app",
+    "https://website-bv36edoeb-kenistances-projects.vercel.app"
+]
+
+
+
 
 # Email settings for enquiry notifications
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
