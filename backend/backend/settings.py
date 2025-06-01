@@ -125,7 +125,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://website-git-main-kenistances-projects.vercel.app",
-    "https://website-bv36edoeb-kenistances-projects.vercel.app"
+    "https://website-bv36edoeb-kenistances-projects.vercel.app",
+    "https://website3-ho1y.onrender.com",
 # Change if React runs on different port or add more URLs
 ]
 CORS_ALLOW_CREDENTIALS = True
@@ -133,7 +134,8 @@ CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
     "https://website-git-main-kenistances-projects.vercel.app",
-    "https://website-bv36edoeb-kenistances-projects.vercel.app"
+    "https://website-bv36edoeb-kenistances-projects.vercel.app",
+    "https://website3-ho1y.onrender.com",
 ]
 
 

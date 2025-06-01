@@ -1,6 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from portfolio.models import Project
 from .utils import create_stripe_checkout_session, create_mpesa_payment_request
 from .serializers import PaymentSerializer
@@ -41,13 +43,14 @@ class StripeCheckoutSessionView(APIView):
             return Response({"error": "Failed to create Stripe session"}, status=500)
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class MpesaPaymentRequestView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         project_id = request.data.get('project_id')
         phone_number = request.data.get('phone_number')
-        user = request.user
+        user = request.user if request.user.is_authenticated else None
 
         try:
             project = Project.objects.get(id=project_id)
@@ -61,7 +64,7 @@ class MpesaPaymentRequestView(APIView):
             phone_number=phone_number,
             amount=project.price,
             project_id=project.id,
-            user_id=user.id
+            user_id=user.id if user else None
         )
 
         if response_data.get('success'):
