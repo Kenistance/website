@@ -78,7 +78,7 @@
   border: 1px solid rgba(76, 175, 80, 0.3);
   backdrop-filter: blur(10px);
   box-shadow: 0 8px 24px rgba(0, 120, 215, 0.15);
-  color:  #338d11;
+  color: #338d11;
   padding: 1.5rem;
   box-sizing: border-box;
   overflow: hidden;
@@ -131,7 +131,6 @@
   margin-bottom: 0.5rem;
   padding-left: 0.5rem;
   color: #338d11;
-
 }
 
 .list::-webkit-scrollbar {
@@ -154,6 +153,8 @@
     background-position: 0%;
   }
 }
+
+/* Responsive Design */
 
 @media (max-width: 1024px) {
   .grid {
