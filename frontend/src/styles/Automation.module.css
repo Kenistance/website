@@ -83,6 +83,7 @@
   box-sizing: border-box;
   overflow: hidden;
   user-select: none;
+  backface-visibility: hidden; /* Added to hide back face when rotated */
 }
 
 .front {
@@ -100,6 +101,8 @@
   color: #EAEBD0;
   text-align: center;
   padding: 2rem;
+  backface-visibility: hidden; /* Added */
+  overflow: hidden; /* Ensures no overflow issues */
 }
 
 .cube:hover {
