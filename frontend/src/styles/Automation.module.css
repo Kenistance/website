@@ -51,7 +51,7 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 8rem;
+  gap: 4rem;
   perspective: 1200px;
   justify-items: center;
   padding: 0 2rem;
@@ -67,6 +67,7 @@
   transition: transform 0.6s ease;
   cursor: pointer;
   border-radius: 1rem;
+  margin-bottom: 2rem; /* Added base margin */
 }
 
 .cube > div {
@@ -83,7 +84,7 @@
   box-sizing: border-box;
   overflow: hidden;
   user-select: none;
-  backface-visibility: hidden; /* Added to hide back face when rotated */
+  backface-visibility: hidden;
 }
 
 .front {
@@ -101,8 +102,8 @@
   color: #EAEBD0;
   text-align: center;
   padding: 2rem;
-  backface-visibility: hidden; /* Added */
-  overflow: hidden; /* Ensures no overflow issues */
+  backface-visibility: hidden;
+  overflow: hidden;
 }
 
 .cube:hover {
@@ -162,19 +163,21 @@
 @media (max-width: 1024px) {
   .grid {
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 2.5rem;
+    gap: 3rem; /* Increased gap */
     padding: 0 1.5rem;
   }
 
   .cube {
     width: 260px;
     height: 240px;
+    margin-bottom: 3rem; /* Increased margin */
   }
 }
 
 @media (max-width: 768px) {
   .container {
     padding: 1.5rem 0.5rem 2rem;
+    min-height: auto; /* Allow container to grow naturally */
   }
 
   .title {
@@ -187,21 +190,47 @@
   }
 
   .introBox {
-    margin: 0 1rem 2rem;
+    margin: 0 1rem 3rem; /* Increased bottom margin */
     padding: 1.5rem;
   }
 
   .grid {
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 4rem; /* Much larger gap for mobile */
     padding: 0 1rem;
+    perspective: none; /* Remove 3D perspective on mobile */
   }
 
   .cube {
     width: 100%;
-    max-width: 300px;
-    height: 220px;
-    margin-bottom: 1.5rem; /* Added margin to prevent overlap */
+    max-width: 320px; /* Slightly wider */
+    height: auto; /* Allow height to be flexible */
+    min-height: 240px;
+    margin-bottom: 4rem; /* Large margin between cards */
+    transform-style: flat; /* Disable 3D transforms on mobile */
+    position: relative;
+    z-index: 1; /* Ensure proper stacking */
+  }
+
+  .cube > div {
+    position: static; /* Remove absolute positioning on mobile */
+    transform: none; /* Remove all transforms */
+    height: auto;
+    min-height: 220px;
+  }
+
+  .front {
+    display: block;
+    transform: none;
+  }
+
+  .back {
+    display: none; /* Hide back face on mobile to avoid confusion */
+    transform: none;
+  }
+
+  .cube:hover {
+    transform: none; /* Disable hover effect on mobile */
   }
 
   .cardTitle {
@@ -217,7 +246,7 @@
 
 @media (max-width: 480px) {
   .container {
-    padding: 1rem 0.25rem 1.5rem;
+    padding: 1rem 0.25rem 2rem;
   }
 
   .title {
@@ -229,21 +258,24 @@
   }
 
   .introBox {
-    margin: 0 0.5rem 1.5rem;
+    margin: 0 0.5rem 2rem;
     padding: 1.25rem;
   }
 
   .grid {
-    gap: 1.5rem;
+    gap: 3rem; /* Large gap for small screens */
     padding: 0 0.5rem;
   }
 
   .cube {
-    height: 200px;
+    max-width: 300px;
+    min-height: 220px;
+    margin-bottom: 3rem;
   }
 
   .cube > div {
     padding: 1.25rem;
+    min-height: 200px;
   }
 
   .cardTitle {
@@ -257,5 +289,16 @@
 
   .list li {
     margin-bottom: 0.4rem;
+  }
+}
+
+/* Additional fix for very small screens */
+@media (max-width: 360px) {
+  .grid {
+    gap: 2.5rem;
+  }
+  
+  .cube {
+    margin-bottom: 2.5rem;
   }
 }

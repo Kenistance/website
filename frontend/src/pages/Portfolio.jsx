@@ -145,29 +145,31 @@ function Portfolio() {
                   />
                 )}
 
-                {/* Conditionally render buttons based on payment requirement */}
-                <div className="mt-4 space-x-2">
+                {/* Styled payment buttons section */}
+                <div className={styles.paymentContainer}>
                   {project.requires_payment ? (
                     <>
                       <button
                         onClick={() => handleStripePayment(project)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                        className={`${styles.paymentButton} ${styles.stripeButton}`}
                       >
-                        Pay with Card (${project.price})
+                        Pay with Card
+                        <span className={styles.priceText}>${project.price}</span>
                       </button>
                       <button
                         onClick={() => handleMpesaPayment(project)}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+                        className={`${styles.paymentButton} ${styles.mpesaButton}`}
                       >
                         Pay with Mpesa
+                        <span className={styles.priceText}>${project.price}</span>
                       </button>
                     </>
                   ) : (
                     <button
                       onClick={() => handleFreeDownload(project)}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
+                      className={`${styles.paymentButton} ${styles.downloadButton}`}
                     >
-                      Download
+                      Download Free
                     </button>
                   )}
                 </div>
