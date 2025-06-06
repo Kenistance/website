@@ -1,4 +1,4 @@
-# backend/payments/views.py - Enhanced MpesaPaymentRequestView with better error handling
+# backend/payments/views.py
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -6,12 +6,13 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from portfolio.models import Project
-from .utils import create_mpesa_payment_request, verify_mpesa_payment
+from .utils import create_mpesa_payment_request, verify_mpesa_payment, create_stripe_checkout_session # Added create_stripe_checkout_session
 from .serializers import PaymentSerializer
 from .models import Payment
 import logging
 import json
 from django.http import JsonResponse
+from django.shortcuts import redirect # Added redirect
 
 logger = logging.getLogger('payments')
 
@@ -166,4 +167,89 @@ class MpesaPaymentRequestView(APIView):
                 "success": False,
                 "error": f"Dispatch error: {str(e)}",
                 "errorMessage": "An unexpected error occurred. Please try again."
+            }, status=500)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class StripeCheckoutSessionView(APIView):
+    permission_classes = [IsAuthenticated] # Ensures only authenticated users can access
+
+    def post(self, request):
+        try:
+            logger.info(f"Stripe checkout session request received")
+            logger.info(f"Request data: {request.data}")
+            logger.info(f"Request user: {request.user}")
+            logger.info(f"User authenticated: {request.user.is_authenticated}")
+
+            project_id = request.data.get('project_id')
+            user = request.user
+
+            if not project_id:
+                logger.error("Missing project_id for Stripe checkout")
+                return Response({
+                    "success": False,
+                    "error": "Project ID is required",
+                    "errorMessage": "Project ID is required for Stripe checkout"
+                }, status=400)
+
+            try:
+                project = Project.objects.get(id=project_id)
+                logger.info(f"Project found for Stripe: {project.title}, Price: {project.price}, Requires payment: {project.requires_payment}")
+            except Project.DoesNotExist:
+                logger.error(f"Project not found for Stripe: {project_id}")
+                return Response({
+                    "success": False,
+                    "error": "Project not found",
+                    "errorMessage": "Project not found for Stripe checkout"
+                }, status=404)
+
+            if not project.requires_payment:
+                logger.error(f"Project {project_id} doesn't require payment for Stripe")
+                return Response({
+                    "success": False,
+                    "error": "Project does not require payment",
+                    "errorMessage": "This project is free to download, no Stripe payment needed"
+                }, status=400)
+            
+            # Create a pending payment record
+            logger.info(f"Creating pending Stripe payment record for user {user.id}, project {project_id}")
+            payment = Payment.objects.create(
+                user=user,
+                project=project,
+                amount=project.price,
+                method='stripe',
+                status='pending'
+            )
+            logger.info(f"Payment record created for Stripe with ID: {payment.id}")
+
+            # Call the utility function to create the Stripe checkout session
+            checkout_session_url = create_stripe_checkout_session(project, user)
+            
+            if checkout_session_url:
+                logger.info(f"Stripe Checkout Session created: {checkout_session_url}")
+                # Update the payment record with Stripe checkout session ID if available (optional, but good for tracking)
+                # Note: Stripe Checkout Session ID is different from transaction ID after successful payment
+                # You might want to update `payment.transaction_id` in your Stripe webhook handler.
+                # For now, we'll redirect.
+                return Response({
+                    "success": True,
+                    "redirect_url": checkout_session_url,
+                    "message": "Stripe checkout session created successfully."
+                }, status=200)
+            else:
+                logger.error(f"Failed to create Stripe Checkout Session for project {project_id}")
+                # Delete the pending payment record if session creation failed
+                payment.delete()
+                return Response({
+                    "success": False,
+                    "error": "Failed to create Stripe checkout session",
+                    "errorMessage": "Could not initiate Stripe payment. Please try again."
+                }, status=500)
+
+        except Exception as e:
+            logger.exception(f"Unexpected error in StripeCheckoutSessionView: {str(e)}")
+            return Response({
+                "success": False,
+                "error": f"Server error: {str(e)}",
+                "errorMessage": "An unexpected error occurred during Stripe checkout. Please try again."
             }, status=500)
