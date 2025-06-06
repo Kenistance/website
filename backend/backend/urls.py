@@ -1,3 +1,4 @@
+# backend/backend/urls.py
 from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
@@ -15,8 +16,9 @@ def root_view(request):
             "/api/portfolio/",
             "/api/enquiry/",
             "/api/chat/",
-            "/api/requests/",
-            "/api/payments/",   # Add payments here
+            "/api/requests/", # Assuming this points to project_requests.urls as before
+            "/api/payments/",
+            "/api/users/", # Added: Endpoint for users app
         ]
     })
 
@@ -25,11 +27,13 @@ urlpatterns = [
     path('', root_view),
     path('api/test/', test_api),
     path('api/portfolio/', include('portfolio.urls')),
-    path('api/enquiry/', include('enquiry.urls')), 
+    path('api/enquiry/', include('enquiry.urls')),
     path('api/chat/', include('chat.urls')),
-    path('api/requests/', include('project_requests.urls')),
-    path('api/payments/', include('payments.urls')),  # Payments URLs here
+    path('api/requests/', include('project_requests.urls')), # Confirmed this refers to project_requests
+    path('api/payments/', include('payments.urls')),
+    path('api/users/', include('users.urls')), # ADDED: Include URLs from the users app
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) # ADDED: Serve media files in development
