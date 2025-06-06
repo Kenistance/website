@@ -73,8 +73,8 @@ ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
+        'DIRS': [os.path.join(BASE_DIR, 'templates')], # ADDED: This line allows for project-wide templates
+        'APP_DIRS': True, # Ensures app-specific templates (like users/templates/email) are found
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
@@ -142,15 +142,19 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 
-# Email settings for enquiry notifications
+# Email settings for enquiry notifications and password reset (UPDATED)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com') # Use environment variable, fallback to gmail
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587)) # Use environment variable, fallback to 587
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True' # Use environment variable, fallback to True
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False') == 'True' # Add SSL option, fallback to False
 
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# ADDED: Frontend URL for password reset link
+FRONTEND_PASSWORD_RESET_URL = os.getenv('FRONTEND_PASSWORD_RESET_URL', 'http://localhost:5173/reset-password')
 
 
 # Payment Settings
@@ -159,11 +163,11 @@ STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', 'your_stripe_publis
 
 # M-Pesa Settings
 MPESA_ENVIRONMENT = os.getenv('MPESA_ENVIRONMENT', 'sandbox')   # 'sandbox' or 'production'
-MPESA_CONSUMER_KEY = 'Vq1GjoIdaLKAZfyWhov8HL8IAjNCwfNCqGBXczvnvTDM8Wxm'
-MPESA_CONSUMER_SECRET = 'UyYovjELndltcaQt4NfRJglZAv9aEXJUGzezOir6kUJ11qOCINPlWHerN7gOgYpP'
+MPESA_CONSUMER_KEY = os.getenv('MPESA_CONSUMER_KEY', 'Vq1GjoIdaLKAZfyWhov8HL8IAjNCwfNCqGBXczvnvTDM8Wxm') # Using getenv
+MPESA_CONSUMER_SECRET = os.getenv('MPESA_CONSUMER_SECRET', 'UyYovjELndltcaQt4NfRJglZAv9aEXJUGzezOir6kUJ11qOCINPlWHerN7gOgYpP') # Using getenv
 MPESA_SHORTCODE = os.getenv('MPESA_SHORTCODE', '174379')   # Your business shortcode
 MPESA_PASSKEY = os.getenv('MPESA_PASSKEY', 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919')   # Sandbox passkey
-MPESA_CALLBACK_URL = 'https://website3-ho1y.onrender.com/api/payments/mpesa-callback/'
+MPESA_CALLBACK_URL = os.getenv('MPESA_CALLBACK_URL', 'https://website3-ho1y.onrender.com/api/payments/mpesa-callback/') # Using getenv
 
 # M-Pesa API URLs
 if MPESA_ENVIRONMENT == 'sandbox':

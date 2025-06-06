@@ -1,7 +1,7 @@
 // src/pages/Login.jsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Assuming you use React Router
-import styles from '../styles/Auth.module.css'; // Use the same CSS module
+import { useNavigate } from 'react-router-dom';
+import styles from '../styles/Auth.module.css';
 
 function Login() {
   const [username, setUsername] = useState('');
@@ -26,16 +26,15 @@ function Login() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        // Simple error handling; adjust based on backend error messages
         throw new Error(errorData.detail || 'Login failed');
       }
 
       const data = await response.json();
-      localStorage.setItem('accessToken', data.access); // Store access token
-      localStorage.setItem('refreshToken', data.refresh); // Store refresh token
+      localStorage.setItem('accessToken', data.access);
+      localStorage.setItem('refreshToken', data.refresh);
 
       alert('Login successful!');
-      navigate('/portfolio'); // Redirect to dashboard or portfolio page
+      navigate('/portfolio');
 
     } catch (err) {
       setError(err.message);
@@ -77,6 +76,10 @@ function Login() {
         </form>
         <p className={styles.toggleLink}>
           Don't have an account? <span onClick={() => navigate('/register')}>Register here</span>
+        </p>
+        {/* ADDED: Forgot Password Link */}
+        <p className={styles.toggleLink}>
+          <span onClick={() => navigate('/request-password-reset')}>Forgot Password?</span>
         </p>
       </div>
     </div>

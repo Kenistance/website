@@ -3,9 +3,15 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken # Import RefreshToken
-from .serializers import UserRegistrationSerializer, UserProfileSerializer # Use UserProfileSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from .serializers import UserRegistrationSerializer, UserProfileSerializer, PasswordResetRequestSerializer, SetNewPasswordSerializer
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.encoding import force_bytes, smart_str
+from django.utils.http import urlsafe_base64_encode
+from django.template.loader import render_to_string
+from django.core.mail import send_mail
+from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,37 +24,30 @@ class UserRegistrationView(generics.CreateAPIView):
     """
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
-    permission_classes = [AllowAny] # Allow anyone to register
+    permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         logger.info(f"User registration attempt for username: {request.data.get('username')}")
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save() # Call serializer.save() directly to get the user instance
+        user = serializer.save()
 
-        # IMPROVEMENT/CLARIFICATION:
-        # Previously, the 'no users in admin' issue was *not* directly caused by this view's logic,
-        # but by URL routing, admin registration, or migration issues.
-        # However, for a more informative frontend response, it's better to return
-        # specific user details on successful registration.
-        logger.info(f"User {user.username} registered successfully.") # Use 'user' instance
+        logger.info(f"User {user.username} registered successfully.")
         return Response({
             "message": "User registered successfully.",
             "user_id": user.id,
             "username": user.username,
             "email": user.email
-            # You might also generate and return tokens here if desired
         }, status=status.HTTP_201_CREATED)
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
     """
     API endpoint for retrieving and updating the authenticated user's profile.
     """
-    serializer_class = UserProfileSerializer # FIX: Changed from CustomUserSerializer to UserProfileSerializer
-    permission_classes = [IsAuthenticated] # Only authenticated users can access their profile
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        # Return the currently authenticated user's profile
         return self.request.user
 
     def retrieve(self, request, *args, **kwargs):
@@ -79,8 +78,6 @@ class LogoutView(APIView):
 
     def post(self, request):
         try:
-            # FIX: Changed from request.data["refresh"] to request.data["refresh_token"]
-            # This should match what your frontend sends (commonly 'refresh_token')
             refresh_token = request.data.get("refresh_token")
             if not refresh_token:
                 logger.warning(f"Logout attempt by {request.user.username}: No refresh_token provided.")
@@ -93,3 +90,67 @@ class LogoutView(APIView):
         except Exception as e:
             logger.error(f"Logout failed for user {request.user.username}: {e}")
             return Response({"detail": "Invalid token or logout failed."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PasswordResetRequestView(generics.GenericAPIView):
+    """
+    API endpoint for requesting a password reset.
+    Sends an email with a reset link to the user.
+    """
+    serializer_class = PasswordResetRequestSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+
+        try:
+            user = User.objects.get(email=email)
+            uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+            token = PasswordResetTokenGenerator().make_token(user)
+
+            # Construct the reset link (adjust 'frontend_url' as per your frontend application)
+            # You might want to get the domain dynamically from the request or settings
+            # For simplicity, we assume a fixed domain or it's provided by the frontend.
+            # Example: http://localhost:3000/reset-password/uidb64/token
+            frontend_url = getattr(settings, 'FRONTEND_PASSWORD_RESET_URL', 'http://localhost:3000/reset-password')
+            reset_link = f"{frontend_url}/{uidb64}/{token}/"
+
+            # Render email content
+            email_subject = "Password Reset Request"
+            email_body = render_to_string('email/password_reset_email.html', {
+                'user': user,
+                'reset_link': reset_link,
+                'domain': request.META.get('HTTP_HOST') or 'yourdomain.com', # Use request host or a fallback
+            })
+
+            send_mail(
+                email_subject,
+                email_body,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+            logger.info(f"Password reset email sent to {user.email}.")
+            return Response({"detail": "Password reset email sent successfully."}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            logger.warning(f"Password reset request for non-existent email: {email}")
+            return Response({"detail": "User with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error sending password reset email to {email}: {e}")
+            return Response({"detail": "Error sending password reset email."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class SetNewPasswordView(generics.GenericAPIView):
+    """
+    API endpoint for setting a new password using the UID and token.
+    """
+    serializer_class = SetNewPasswordSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save() # The save method in the serializer handles password update
+        logger.info(f"Password for user {user.username} has been successfully reset.")
+        return Response({"detail": "Password has been reset successfully."}, status=status.HTTP_200_OK)

@@ -16,9 +16,9 @@ def root_view(request):
             "/api/portfolio/",
             "/api/enquiry/",
             "/api/chat/",
-            "/api/requests/", # Assuming this points to project_requests.urls as before
+            "/api/requests/", 
             "/api/payments/",
-            "/api/users/", # Added: Endpoint for users app
+            "/api/users/", 
         ]
     })
 
