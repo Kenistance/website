@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+// src/pages/HomePage.jsx
+import React, { useEffect, useState, useCallback } from 'react';
 import EnquiryBox from '../components/EnquiryBox';
 import ChatBox from '../components/ChatBox';
-import '../styles/HomePage.css';
+import '../styles/HomePage.css'; // Make sure this CSS file is updated as well
 
 const services = [
   {
@@ -22,29 +23,16 @@ const services = [
   }
 ];
 
-function Cube({ title, details }) {
-  const [showFront, setShowFront] = useState(true);
-
-  const handleHover = () => {
-    setShowFront(prev => !prev);
-  };
-
+// ServiceCard component - no 'icon' prop
+function ServiceCard({ title, details }) {
   return (
-    <div className="cube-wrapper" onMouseEnter={handleHover}>
-      <div className={`cube ${showFront ? 'show-front' : 'show-back'}`}>
-        <div className="face front">
-          <ul>
-            {details.map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ul>
-        </div>
-        <div className="face back">{title}</div>
-        <div className="face left">{title}</div>
-        <div className="face right">{title}</div>
-        <div className="face top">{title}</div>
-        <div className="face bottom">{title}</div>
-      </div>
+    <div className="service-card">
+      <h3 className="service-card-title">{title}</h3>
+      <ul className="service-card-details">
+        {details.map((item, index) => (
+          <li key={index}>{item}</li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -60,24 +48,31 @@ function HomePage() {
   const [nextImage, setNextImage] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
+  // Preload images
   useEffect(() => {
     images.forEach((src) => {
       const img = new Image();
       img.src = src;
     });
-  }, []);
+  }, [images]);
 
+  // Background image rotation
   useEffect(() => {
     const interval = setInterval(() => {
       setIsTransitioning(true);
       setTimeout(() => {
         setCurrentImage(nextImage);
-        setNextImage((nextImage + 1) % images.length);
+        setNextImage((prevNextImage) => (prevNextImage + 1) % images.length);
         setIsTransitioning(false);
       }, 1000);
     }, 8000);
     return () => clearInterval(interval);
-  }, [nextImage]);
+  }, [nextImage, images.length]);
+
+  // Function to scroll to the enquiry section
+  const scrollToEnquiry = useCallback(() => {
+    document.getElementById('enquiry').scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
   return (
     <>
@@ -96,32 +91,20 @@ function HomePage() {
         <header className="home-header">
           <h1 className="main-title">Code254: Smart Digital Solutions</h1>
           <p className="subtitle">We build custom websites, AI tools, Automation tools with python and data systems to solve real problems — for Africa and beyond.</p>
+          <button className="cta-button" onClick={scrollToEnquiry}>
+            Get a Free Consultation
+          </button>
         </header>
 
         <section className="services-section">
           <h2 className="section-title">We Offer Exceptional Services In...</h2>
           <div className="services-grid">
             {services.map((service, i) => (
-              <Cube key={i} title={service.title} details={service.details} />
-            ))}
-          </div>
-
-          {/* New plain service summaries */}
-          <div className="service-summary-box">
-            {services.map((service, i) => (
-              <div key={i} className="service-summary-item">
-                <h3>{service.title}</h3>
-                <ul>
-                  {service.details.map((point, j) => (
-                    <li key={j}>{point}</li>
-                  ))}
-                </ul>
-              </div>
+              <ServiceCard key={i} title={service.title} details={service.details} />
             ))}
           </div>
         </section>
 
-        {/* Enquiry section with improved messaging */}
         <section id="enquiry" className="enquiry-wrapper">
           <h2 className="section-title">Let's Talk About Your Project</h2>
           <p className="subtitle">Tell us what you're looking for — we will respond within 24 hours.</p>

@@ -1,12 +1,12 @@
 // src/pages/Requests.jsx
-import React, { useEffect, useState, useCallback } from 'react'; // ADDED: useCallback for memoizing functions
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/Requests.css';
 
 function Requests() {
   const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true); // ADDED: loading state
-  const [error, setError] = useState(null);     // ADDED: error state
+  const [loading, setLoading] = useState(true); 
+  const [error, setError] = useState(null);     
 
   // ADDITION: Helper function to get auth token from localStorage
   const getAuthToken = useCallback(() => {
