@@ -1,5 +1,6 @@
 // src/pages/Portfolio.jsx
 import React, { useEffect, useState, useCallback } from 'react';
+import TunnelGridBackground from '../components/TunnelGridBackground'; // <--- Keep this import
 import CompletedProjectsHeader from '../components/CompletedProjectsHeader';
 import styles from '../styles/Portfolio.module.css';
 
@@ -62,9 +63,6 @@ function Portfolio() {
     setError(null);
     let accessToken = getAuthToken();
 
-    // The ProjectListView is now public, so no token is strictly required for *fetching* the list.
-    // However, if other parts of your app or future features require authentication for some project details,
-    // this logic remains useful. For now, we allow fetching without a token for the public list.
     let headers = {};
     if (accessToken) {
       headers['Authorization'] = `Bearer ${accessToken}`;
@@ -74,7 +72,6 @@ function Portfolio() {
       const response = await fetch('https://website3-ho1y.onrender.com/api/portfolio/', { headers });
 
       if (!response.ok) {
-        // If the backend returns an error even for public access (e.g., 500), handle it.
         throw new Error('Failed to load projects');
       } else {
         const data = await response.json();
@@ -86,7 +83,7 @@ function Portfolio() {
     } finally {
       setLoading(false);
     }
-  }, [getAuthToken]); // Removed refreshAuthToken from dependencies if not strictly needed for initial fetch
+  }, [getAuthToken]);
 
   useEffect(() => {
     fetchProjects();
@@ -166,7 +163,6 @@ function Portfolio() {
     }
   };
 
-  // Modified handleFreeDownload to use project.download_url
   const handleFreeDownload = (project) => {
     if (project.download_url) {
       window.open(project.download_url, '_blank'); // Open download URL in a new tab
@@ -175,7 +171,6 @@ function Portfolio() {
     }
   };
 
-  // New function to handle visiting website projects
   const handleVisitWebsite = (project) => {
     if (project.website_url) {
       window.open(project.website_url, '_blank'); // Open website URL in a new tab
@@ -184,10 +179,10 @@ function Portfolio() {
     }
   };
 
-
   return (
     <div className={styles.portfolioPage}>
-      {/* REMOVED: <TunnelGridBackground /> */}
+      {/* Ensure TunnelGridBackground is rendered *before* other content if it needs to be behind */}
+      <TunnelGridBackground /> {/* <--- RE-ADDED HERE */}
       <div className={styles.content}>
         <CompletedProjectsHeader />
         {loading && <p>Loading projects...</p>}
@@ -199,7 +194,6 @@ function Portfolio() {
           <ul className={styles.projectList}>
             {projects.map((project) => (
               <li key={project.id} className={styles.projectItem}>
-                {/* Display image if available */}
                 {project.image_url && (
                   <img src={project.image_url} alt={project.title} className={styles.projectImage} />
                 )}
@@ -207,7 +201,6 @@ function Portfolio() {
                 <p className={styles.projectDescription}>{project.description}</p>
                 <div className={styles.paymentSection}>
                   {project.project_type && project.project_type.toLowerCase() === 'website' && project.website_url ? (
-                    // Render "Visit Website" button for website projects
                     <button
                       onClick={() => handleVisitWebsite(project)}
                       className={`${styles.paymentButton} ${styles.websiteButton}`}
@@ -215,7 +208,6 @@ function Portfolio() {
                       Visit Website
                     </button>
                   ) : project.project_type && project.project_type.toLowerCase() === 'program' ? (
-                    // Render payment/download options for program projects
                     project.price > 0 ? (
                       <>
                         <button
@@ -248,7 +240,6 @@ function Portfolio() {
                       </button>
                     )
                   ) : (
-                    // Fallback if project_type is not defined, not 'website', or not 'program'
                     <p>Link coming soon.</p>
                   )}
                 </div>
