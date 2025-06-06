@@ -1,6 +1,5 @@
 // src/pages/Portfolio.jsx
 import React, { useEffect, useState, useCallback } from 'react';
-import TunnelGridBackground from '../components/TunnelGridBackground';
 import CompletedProjectsHeader from '../components/CompletedProjectsHeader';
 import styles from '../styles/Portfolio.module.css';
 
@@ -188,7 +187,7 @@ function Portfolio() {
 
   return (
     <div className={styles.portfolioPage}>
-      <TunnelGridBackground />
+      {/* REMOVED: <TunnelGridBackground /> */}
       <div className={styles.content}>
         <CompletedProjectsHeader />
         {loading && <p>Loading projects...</p>}
@@ -207,7 +206,7 @@ function Portfolio() {
                 <h3 className={styles.projectTitle}>{project.title}</h3>
                 <p className={styles.projectDescription}>{project.description}</p>
                 <div className={styles.paymentSection}>
-                  {project.project_type === 'website' && project.website_url ? (
+                  {project.project_type && project.project_type.toLowerCase() === 'website' && project.website_url ? (
                     // Render "Visit Website" button for website projects
                     <button
                       onClick={() => handleVisitWebsite(project)}
@@ -215,7 +214,7 @@ function Portfolio() {
                     >
                       Visit Website
                     </button>
-                  ) : project.project_type === 'program' ? (
+                  ) : project.project_type && project.project_type.toLowerCase() === 'program' ? (
                     // Render payment/download options for program projects
                     project.price > 0 ? (
                       <>
@@ -249,8 +248,8 @@ function Portfolio() {
                       </button>
                     )
                   ) : (
-                    // Fallback if project_type is not defined or unrecognized
-                    <p>Action not defined for this project type.</p>
+                    // Fallback if project_type is not defined, not 'website', or not 'program'
+                    <p>Link coming soon.</p>
                   )}
                 </div>
               </li>
