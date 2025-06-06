@@ -7,6 +7,7 @@ function Portfolio() {
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [paymentLoading, setPaymentLoading] = useState(null) // Track which payment is processing
 
   useEffect(() => {
     fetch('https://website3-ho1y.onrender.com/api/portfolio/')
@@ -25,6 +26,15 @@ function Portfolio() {
       })
   }, [])
 
+  // Helper function to get auth token (if you're using token auth)
+  function getAuthToken() {
+    // Return your auth token here - this depends on how you store it
+    // For example, if using localStorage:
+    // return localStorage.getItem('authToken')
+    // Or if using cookies, the browser will handle it automatically with credentials: 'include'
+    return localStorage.getItem('authToken') // Adjust based on your auth system
+  }
+
   // Called when a project is free to download
   function handleFreeDownload(project) {
     if (project.download_link) {
@@ -38,63 +48,137 @@ function Portfolio() {
 
   // Start a Stripe checkout session
   function handleStripePayment(project) {
+    if (paymentLoading) return // Prevent multiple simultaneous requests
+    
+    setPaymentLoading(`stripe-${project.id}`)
+    
+    const authToken = getAuthToken()
+    const headers = {
+      'Content-Type': 'application/json',
+    }
+    
+    // Add authorization header if token exists
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}` // Adjust format based on your auth system
+    }
+
     fetch('https://website3-ho1y.onrender.com/api/payments/stripe-checkout/', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // include cookies/auth if required
+      headers: headers,
+      credentials: 'include', // include cookies/auth
       body: JSON.stringify({ project_id: project.id }),
     })
       .then((res) => {
-        if (!res.ok) throw new Error('Could not create Stripe session')
+        if (!res.ok) {
+          return res.json().then(errorData => {
+            throw new Error(errorData.error || `HTTP ${res.status}: Could not create Stripe session`)
+          })
+        }
         return res.json()
       })
       .then((data) => {
-        // Stripe returns a checkout_url; redirect the user there
-        if (data.checkout_url) {
+        console.log('Stripe response:', data)
+        // Check for success and checkout_url
+        if (data.success && data.checkout_url) {
+          window.location.href = data.checkout_url
+        } else if (data.checkout_url) {
           window.location.href = data.checkout_url
         } else {
-          alert('Unable to start Stripe checkout')
+          throw new Error(data.error || 'Unable to get checkout URL')
         }
       })
       .catch((err) => {
         console.error('Stripe payment error:', err)
         alert('Error starting card payment: ' + err.message)
       })
+      .finally(() => {
+        setPaymentLoading(null)
+      })
+  }
+
+  // Validate phone number format
+  function validatePhoneNumber(phone) {
+    // Remove any spaces, dashes, or other characters
+    const cleaned = phone.replace(/[\s\-\(\)]/g, '')
+    
+    // Check if it starts with 254 and has correct length
+    if (cleaned.startsWith('254') && cleaned.length === 12) {
+      return cleaned
+    }
+    
+    // If it starts with 0, replace with 254
+    if (cleaned.startsWith('0') && cleaned.length === 10) {
+      return '254' + cleaned.substring(1)
+    }
+    
+    // If it starts with 7 and has 9 digits, add 254
+    if (cleaned.startsWith('7') && cleaned.length === 9) {
+      return '254' + cleaned
+    }
+    
+    return null
   }
 
   // Start an Mpesa payment request
   function handleMpesaPayment(project) {
-    const phone = prompt('Enter your Mpesa phone number (e.g. 2547XXXXXXXX)')
-    if (!phone) return
+    if (paymentLoading) return // Prevent multiple simultaneous requests
+    
+    const phoneInput = prompt('Enter your M-Pesa phone number:\n(Format: 0712345678 or 254712345678)')
+    if (!phoneInput) return
+
+    const validatedPhone = validatePhoneNumber(phoneInput.trim())
+    if (!validatedPhone) {
+      alert('Invalid phone number format. Please use format: 0712345678 or 254712345678')
+      return
+    }
+
+    setPaymentLoading(`mpesa-${project.id}`)
+
+    const authToken = getAuthToken()
+    const headers = {
+      'Content-Type': 'application/json',
+    }
+    
+    // Add authorization header if token exists
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}` // Adjust format based on your auth system
+    }
 
     fetch('https://website3-ho1y.onrender.com/api/payments/mpesa-payment/', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: headers,
       credentials: 'include',
       body: JSON.stringify({
         project_id: project.id,
-        phone_number: phone.trim(),
+        phone_number: validatedPhone,
       }),
     })
       .then((res) => {
-        if (!res.ok) throw new Error('Mpesa request failed')
+        if (!res.ok) {
+          return res.json().then(errorData => {
+            throw new Error(errorData.error || errorData.errorMessage || `HTTP ${res.status}: M-Pesa request failed`)
+          })
+        }
         return res.json()
       })
       .then((data) => {
-        // Assuming your backend returns a JSON response indicating success
-        if (data.checkoutRequestID || data.response_code === '0') {
-          alert('Mpesa payment prompt sent. Check your phone to complete payment.')
+        console.log('M-Pesa response:', data)
+        
+        if (data.success) {
+          alert('M-Pesa payment prompt sent to your phone. Please check your phone and enter your M-Pesa PIN to complete the payment.')
         } else {
-          alert('Mpesa request response: ' + (data.errorMessage || JSON.stringify(data)))
+          // Show the specific error message from the backend
+          const errorMsg = data.errorMessage || data.error || 'M-Pesa payment request failed'
+          alert('M-Pesa Error: ' + errorMsg)
+          console.error('M-Pesa error details:', data)
         }
       })
       .catch((err) => {
-        console.error('Mpesa payment error:', err)
-        alert('Error initiating Mpesa payment: ' + err.message)
+        console.error('M-Pesa payment error:', err)
+        alert('Error initiating M-Pesa payment: ' + err.message)
+      })
+      .finally(() => {
+        setPaymentLoading(null)
       })
   }
 
@@ -151,16 +235,22 @@ function Portfolio() {
                     <>
                       <button
                         onClick={() => handleStripePayment(project)}
-                        className={`${styles.paymentButton} ${styles.stripeButton}`}
+                        disabled={paymentLoading === `stripe-${project.id}`}
+                        className={`${styles.paymentButton} ${styles.stripeButton} ${
+                          paymentLoading === `stripe-${project.id}` ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
                       >
-                        Pay with Card
+                        {paymentLoading === `stripe-${project.id}` ? 'Processing...' : 'Pay with Card'}
                         <span className={styles.priceText}>${project.price}</span>
                       </button>
                       <button
                         onClick={() => handleMpesaPayment(project)}
-                        className={`${styles.paymentButton} ${styles.mpesaButton}`}
+                        disabled={paymentLoading === `mpesa-${project.id}`}
+                        className={`${styles.paymentButton} ${styles.mpesaButton} ${
+                          paymentLoading === `mpesa-${project.id}` ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
                       >
-                        Pay with Mpesa
+                        {paymentLoading === `mpesa-${project.id}` ? 'Processing...' : 'Pay with M-Pesa'}
                         <span className={styles.priceText}>${project.price}</span>
                       </button>
                     </>

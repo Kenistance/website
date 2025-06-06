@@ -1,7 +1,12 @@
 import stripe
 import requests
+import base64
+from datetime import datetime
 from django.conf import settings
+from django.utils import timezone
+import logging
 
+logger = logging.getLogger('payments')
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
@@ -26,48 +31,216 @@ def create_stripe_checkout_session(project, user):
         )
         return session.url
     except Exception as e:
-        print(f"Stripe session error: {e}")
+        logger.error(f"Stripe session error: {e}")
         return None
 
 
-def create_mpesa_payment_request(phone_number, amount, project_id, user_id):
-    url = settings.MPESA_API_URL
-    headers = {
-        'Authorization': f'Bearer {settings.MPESA_API_TOKEN}',
-        'Content-Type': 'application/json'
-    }
-    data = {
-        'phone_number': phone_number,
-        'amount': amount,
-        'project_id': project_id,
-        'user_id': user_id,
-        'callback_url': 'https://website3-ho1y.onrender.com/payments/mpesa-callback/'
-    }
-
+def get_mpesa_access_token():
+    """
+    Generate M-Pesa access token using consumer key and secret
+    """
     try:
-        response = requests.post(url, json=data, headers=headers)
-        response.raise_for_status()  # Triggers an error for 4xx or 5xx responses
+        consumer_key = settings.MPESA_CONSUMER_KEY
+        consumer_secret = settings.MPESA_CONSUMER_SECRET
+        
+        # Create the basic auth string
+        auth_string = f"{consumer_key}:{consumer_secret}"
+        auth_bytes = auth_string.encode('ascii')
+        auth_b64 = base64.b64encode(auth_bytes).decode('ascii')
+        
+        headers = {
+            'Authorization': f'Basic {auth_b64}',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.get(settings.MPESA_ACCESS_TOKEN_URL, headers=headers)
+        logger.info(f"M-Pesa token request status: {response.status_code}")
+        
+        if response.status_code == 200:
+            result = response.json()
+            access_token = result.get('access_token')
+            logger.info("M-Pesa access token generated successfully")
+            return access_token
+        else:
+            logger.error(f"Failed to get M-Pesa access token: {response.text}")
+            return None
+            
+    except Exception as e:
+        logger.error(f"Error generating M-Pesa access token: {e}")
+        return None
 
-        try:
-            return response.json()
-        except ValueError:
+
+def generate_mpesa_password():
+    """
+    Generate M-Pesa password using shortcode, passkey and timestamp
+    """
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    shortcode = settings.MPESA_SHORTCODE
+    passkey = settings.MPESA_PASSKEY
+    
+    # Create the password string
+    password_string = f"{shortcode}{passkey}{timestamp}"
+    password_bytes = password_string.encode('ascii')
+    password_b64 = base64.b64encode(password_bytes).decode('ascii')
+    
+    return password_b64, timestamp
+
+
+def create_mpesa_payment_request(phone_number, amount, project_id, user_id):
+    """
+    Create M-Pesa STK Push payment request
+    """
+    try:
+        # Get access token
+        access_token = get_mpesa_access_token()
+        if not access_token:
             return {
                 "success": False,
-                "error": "Failed to decode JSON from M-Pesa response",
-                "raw_response": response.text
+                "error": "Failed to get M-Pesa access token",
+                "errorMessage": "M-Pesa service is temporarily unavailable. Please try again later."
             }
-
-    except requests.exceptions.HTTPError as http_err:
+        
+        # Generate password and timestamp
+        password, timestamp = generate_mpesa_password()
+        
+        # Create unique transaction reference
+        transaction_ref = f"PROJECT_{project_id}_{user_id}_{timestamp}"
+        
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+            'Content-Type': 'application/json'
+        }
+        
+        # Convert amount to KES (assuming your project price is in USD)
+        # You might want to use a currency conversion API here
+        amount_kes = int(float(amount) * 130)  # Rough USD to KES conversion
+        
+        payload = {
+            "BusinessShortCode": settings.MPESA_SHORTCODE,
+            "Password": password,
+            "Timestamp": timestamp,
+            "TransactionType": "CustomerPayBillOnline",
+            "Amount": amount_kes,
+            "PartyA": phone_number,
+            "PartyB": settings.MPESA_SHORTCODE,
+            "PhoneNumber": phone_number,
+            "CallBackURL": settings.MPESA_CALLBACK_URL,
+            "AccountReference": f"PROJECT_{project_id}",
+            "TransactionDesc": f"Payment for project {project_id}"
+        }
+        
+        logger.info(f"Sending M-Pesa STK Push request: {payload}")
+        
+        response = requests.post(settings.MPESA_STK_PUSH_URL, json=payload, headers=headers, timeout=30)
+        
+        logger.info(f"M-Pesa STK Push response status: {response.status_code}")
+        logger.info(f"M-Pesa STK Push response: {response.text}")
+        
+        if response.status_code == 200:
+            result = response.json()
+            response_code = result.get('ResponseCode')
+            
+            if response_code == '0':
+                return {
+                    "success": True,
+                    "checkoutRequestID": result.get('CheckoutRequestID'),
+                    "merchantRequestID": result.get('MerchantRequestID'),
+                    "response_code": response_code,
+                    "transaction_id": result.get('CheckoutRequestID'),
+                    "message": "Payment request sent successfully. Please check your phone.",
+                    "amount_kes": amount_kes
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": result.get('ResponseDescription', 'Payment request failed'),
+                    "errorMessage": result.get('ResponseDescription', 'Payment request failed. Please try again.'),
+                    "response_code": response_code
+                }
+        else:
+            error_msg = "Payment request failed"
+            try:
+                error_data = response.json()
+                error_msg = error_data.get('errorMessage', error_data.get('ResponseDescription', error_msg))
+            except:
+                error_msg = response.text or error_msg
+            
+            return {
+                "success": False,
+                "error": f"M-Pesa API error: {error_msg}",
+                "errorMessage": "Payment request failed. Please try again.",
+                "status_code": response.status_code
+            }
+            
+    except requests.exceptions.Timeout:
+        logger.error("M-Pesa STK Push request timed out")
         return {
             "success": False,
-            "error": f"HTTP error occurred",
-            "details": str(http_err),
-            "response": response.text
+            "error": "Request timed out",
+            "errorMessage": "Payment request timed out. Please try again."
+        }
+    
+    except requests.exceptions.ConnectionError:
+        logger.error("Failed to connect to M-Pesa API")
+        return {
+            "success": False,
+            "error": "Connection error",
+            "errorMessage": "Unable to connect to payment service. Please check your internet connection and try again."
+        }
+    
+    except Exception as e:
+        logger.error(f"M-Pesa STK Push error: {e}")
+        return {
+            "success": False,
+            "error": f"Unexpected error: {str(e)}",
+            "errorMessage": "Payment request failed. Please try again."
         }
 
-    except requests.exceptions.RequestException as req_err:
+
+def verify_mpesa_payment(checkout_request_id):
+    """
+    Verify M-Pesa payment status using checkout request ID
+    """
+    try:
+        access_token = get_mpesa_access_token()
+        if not access_token:
+            return {"success": False, "error": "Failed to get access token"}
+        
+        password, timestamp = generate_mpesa_password()
+        
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+            'Content-Type': 'application/json'
+        }
+        
+        payload = {
+            "BusinessShortCode": settings.MPESA_SHORTCODE,
+            "Password": password,
+            "Timestamp": timestamp,
+            "CheckoutRequestID": checkout_request_id
+        }
+        
+        query_url = f"{settings.MPESA_BASE_URL}/mpesa/stkpushquery/v1/query"
+        response = requests.post(query_url, json=payload, headers=headers, timeout=30)
+        
+        if response.status_code == 200:
+            result = response.json()
+            return {
+                "success": True,
+                "result_code": result.get('ResultCode'),
+                "result_desc": result.get('ResultDesc'),
+                "data": result
+            }
+        else:
+            return {
+                "success": False,
+                "error": "Failed to verify payment",
+                "status_code": response.status_code
+            }
+            
+    except Exception as e:
+        logger.error(f"M-Pesa payment verification error: {e}")
         return {
             "success": False,
-            "error": f"Request exception occurred",
-            "details": str(req_err)
+            "error": str(e)
         }

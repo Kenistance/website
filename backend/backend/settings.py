@@ -139,8 +139,6 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 
-
-
 # Email settings for enquiry notifications
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -152,8 +150,84 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
+# Payment Settings
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', 'your_stripe_secret_key')
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', 'your_stripe_publishable_key')
 
-STRIPE_SECRET_KEY = 'your_stripe_secret_key'
-MPESA_API_URL = 'https://api.safaricom.co.ke/mpesa'  # example URL
-MPESA_API_TOKEN = 'your_mpesa_access_token'
+# M-Pesa Settings
+MPESA_ENVIRONMENT = os.getenv('MPESA_ENVIRONMENT', 'sandbox')  # 'sandbox' or 'production'
+MPESA_CONSUMER_KEY = 'Vq1GjoIdaLKAZfyWhov8HL8IAjNCwfNCqGBXczvnvTDM8Wxm'
+MPESA_CONSUMER_SECRET = 'UyYovjELndltcaQt4NfRJglZAv9aEXJUGzezOir6kUJ11qOCINPlWHerN7gOgYpP'
+MPESA_SHORTCODE = os.getenv('MPESA_SHORTCODE', '174379')  # Your business shortcode
+MPESA_PASSKEY = os.getenv('MPESA_PASSKEY', 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919')  # Sandbox passkey
+MPESA_CALLBACK_URL = 'https://website3-ho1y.onrender.com/api/payments/mpesa-callback/'
+
+# M-Pesa API URLs
+if MPESA_ENVIRONMENT == 'sandbox':
+    MPESA_BASE_URL = 'https://sandbox.safaricom.co.ke'
+else:
+    MPESA_BASE_URL = 'https://api.safaricom.co.ke'
+
+MPESA_ACCESS_TOKEN_URL = f'{MPESA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials'
+MPESA_STK_PUSH_URL = f'{MPESA_BASE_URL}/mpesa/stkpush/v1/processrequest'
+
 MEDIA_ROOT = BASE_DIR / 'media'  # if not set already
+
+# REST Framework settings (if you need them)
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+
+# Logging Configuration for debugging payments
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'payments.log',
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'payments': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+# Create logs directory if it doesn't exist
+os.makedirs(BASE_DIR / 'logs', exist_ok=True)
