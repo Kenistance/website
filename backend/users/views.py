@@ -3,7 +3,8 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
-from .serializers import UserRegistrationSerializer, CustomUserSerializer
+from rest_framework_simplejwt.tokens import RefreshToken # Import RefreshToken
+from .serializers import UserRegistrationSerializer, UserProfileSerializer # Use UserProfileSerializer
 from django.contrib.auth import get_user_model
 import logging
 
@@ -23,16 +24,27 @@ class UserRegistrationView(generics.CreateAPIView):
         logger.info(f"User registration attempt for username: {request.data.get('username')}")
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        logger.info(f"User {serializer.instance.username} registered successfully.")
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        user = serializer.save() # Call serializer.save() directly to get the user instance
+
+        # IMPROVEMENT/CLARIFICATION:
+        # Previously, the 'no users in admin' issue was *not* directly caused by this view's logic,
+        # but by URL routing, admin registration, or migration issues.
+        # However, for a more informative frontend response, it's better to return
+        # specific user details on successful registration.
+        logger.info(f"User {user.username} registered successfully.") # Use 'user' instance
+        return Response({
+            "message": "User registered successfully.",
+            "user_id": user.id,
+            "username": user.username,
+            "email": user.email
+            # You might also generate and return tokens here if desired
+        }, status=status.HTTP_201_CREATED)
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
     """
     API endpoint for retrieving and updating the authenticated user's profile.
     """
-    serializer_class = CustomUserSerializer
+    serializer_class = UserProfileSerializer # FIX: Changed from CustomUserSerializer to UserProfileSerializer
     permission_classes = [IsAuthenticated] # Only authenticated users can access their profile
 
     def get_object(self):
@@ -54,9 +66,6 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         self.perform_update(serializer)
 
         if getattr(instance, '_prefetched_objects_cache', None):
-            # If 'prefetch_related' has been applied to a queryset, we need to
-            # forcibly invalidate the prefetch cache on the instance, otherwise
-            # the updated object might not be reflected in a subsequent retrieve.
             instance._prefetched_objects_cache = {}
 
         return Response(serializer.data)
@@ -70,9 +79,13 @@ class LogoutView(APIView):
 
     def post(self, request):
         try:
-            # Assuming the refresh token is sent in the request body
-            # Or you might get it from a cookie or header if implemented that way
-            refresh_token = request.data["refresh"]
+            # FIX: Changed from request.data["refresh"] to request.data["refresh_token"]
+            # This should match what your frontend sends (commonly 'refresh_token')
+            refresh_token = request.data.get("refresh_token")
+            if not refresh_token:
+                logger.warning(f"Logout attempt by {request.user.username}: No refresh_token provided.")
+                return Response({"detail": "Refresh token not provided."}, status=status.HTTP_400_BAD_REQUEST)
+
             token = RefreshToken(refresh_token)
             token.blacklist()
             logger.info(f"User {request.user.username} logged out successfully (token blacklisted).")
