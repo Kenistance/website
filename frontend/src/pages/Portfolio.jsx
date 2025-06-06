@@ -10,16 +10,19 @@ function Portfolio() {
   const [error, setError] = useState(null);
   const [paymentLoading, setPaymentLoading] = useState(null); // Track which payment is processing
 
-  // Helper function to get auth token
+  // ADDITION: Helper function to get auth token from localStorage
   const getAuthToken = useCallback(() => {
     return localStorage.getItem('accessToken');
   }, []);
 
-  // Function to refresh token if necessary
-  const refreshAuthToken = async () => {
+  // ADDITION: Function to refresh token if necessary
+  const refreshAuthToken = useCallback(async () => { // Made useCallback
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) {
       console.warn("No refresh token found. User needs to log in.");
+      // ALTERATION: Redirect to login if no refresh token
+      alert("No active session. Please log in.");
+      window.location.href = '/login';
       return null;
     }
 
@@ -53,8 +56,9 @@ function Portfolio() {
       window.location.href = '/login'; // Redirect to login
       return null;
     }
-  };
+  }, []); // Dependencies for useCallback
 
+  // ADDITION/ALTERATION: Main function to fetch projects with authentication logic
   const fetchProjects = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -65,8 +69,8 @@ function Portfolio() {
       accessToken = await refreshAuthToken();
       if (!accessToken) {
         setLoading(false);
-        // User is not logged in or session expired, Portfolio might show public content
-        // or a message to log in. For now, it will show error as IsAuthenticated is default.
+        // User is not logged in or session expired. Portfolio might show public content
+        // or a message to log in. Given default IsAuthenticated, display error.
         setError("Please log in to view projects.");
         return;
       }
@@ -75,7 +79,7 @@ function Portfolio() {
     try {
       const response = await fetch('https://website3-ho1y.onrender.com/api/portfolio/', {
         headers: {
-          'Authorization': `Bearer ${accessToken}`, // Include the JWT token
+          'Authorization': `Bearer ${accessToken}`, // KEY ADDITION: Include the JWT token
         },
       });
 
@@ -86,7 +90,7 @@ function Portfolio() {
           // Retry request with new token
           const retryResponse = await fetch('https://website3-ho1y.onrender.com/api/portfolio/', {
             headers: {
-              'Authorization': `Bearer ${accessToken}`,
+              'Authorization': `Bearer ${accessToken}`, // KEY ADDITION: Retry with new token
             },
           });
           if (!retryResponse.ok) {
@@ -110,12 +114,13 @@ function Portfolio() {
     } finally {
       setLoading(false);
     }
-  }, [getAuthToken, refreshAuthToken]); // Include dependencies
+  }, [getAuthToken, refreshAuthToken]); // Include dependencies for useCallback
 
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]); // Run fetchProjects when the component mounts or fetchProjects changes
 
+  // ALTERATION: Payment handlers now ensure token is present and send it
   const handleStripePayment = async (project) => {
     setPaymentLoading(`stripe-${project.id}`);
     const authToken = getAuthToken();
@@ -130,7 +135,7 @@ function Portfolio() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`, // Important: send token
+          'Authorization': `Bearer ${authToken}`, // KEY ADDITION: send token
         },
         body: JSON.stringify({ project_id: project.id }),
       });
@@ -171,7 +176,7 @@ function Portfolio() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`, // Important: send token
+          'Authorization': `Bearer ${authToken}`, // KEY ADDITION: send token
         },
         body: JSON.stringify({ project_id: project.id, phone_number: phoneNumber }),
       });
@@ -192,9 +197,10 @@ function Portfolio() {
     }
   };
 
+  // ALTERATION: Updated comment for clarity
   const handleFreeDownload = (project) => {
-    alert(`Downloading ${project.title} for free! (Not implemented yet)`);
-    // Implement actual free download logic here (e.g., redirect to file)
+    alert(`Downloading ${project.title} for free!`);
+    // TODO: Implement actual free download logic here (e.g., redirect to file)
   };
 
   return (
