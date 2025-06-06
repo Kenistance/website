@@ -1,3 +1,5 @@
+# backend/portfolio/admin.py
+
 from django.contrib import admin
 from .models import Project
 
@@ -5,21 +7,16 @@ from .models import Project
 class ProjectAdmin(admin.ModelAdmin):
     list_display = (
         'title',
-        'created_at',
-        'requires_payment',
+        'project_type',     # New field
         'price',
-        'has_file',
-        'has_download_link',
+        'website_url',      # New field
+        'download_url',
+        'demo_url',
+        'created_at',
+        # 'has_file', # Removed, as file_path existence implies it
+        # 'has_download_link', # Removed, as download_url existence implies it
     )
-    list_filter = ('requires_payment', 'created_at')
-    search_fields = ('title', 'description')
+    list_filter = ('project_type', 'price', 'created_at') # Filter by new fields
+    search_fields = ('title', 'description', 'website_url', 'download_url')
 
-    def has_file(self, obj):
-        return bool(obj.file_path)
-    has_file.boolean = True
-    has_file.short_description = 'Internal File'
-
-    def has_download_link(self, obj):
-        return bool(obj.download_url)
-    has_download_link.boolean = True
-    has_download_link.short_description = 'Download URL'
+    

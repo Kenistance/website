@@ -10,17 +10,16 @@ function Portfolio() {
   const [error, setError] = useState(null);
   const [paymentLoading, setPaymentLoading] = useState(null); // Track which payment is processing
 
-  // ADDITION: Helper function to get auth token from localStorage
+  // Helper function to get auth token from localStorage
   const getAuthToken = useCallback(() => {
     return localStorage.getItem('accessToken');
   }, []);
 
-  // ADDITION: Function to refresh token if necessary
-  const refreshAuthToken = useCallback(async () => { // Made useCallback
+  // Function to refresh token if necessary
+  const refreshAuthToken = useCallback(async () => {
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) {
       console.warn("No refresh token found. User needs to log in.");
-      // ALTERATION: Redirect to login if no refresh token
       alert("No active session. Please log in.");
       window.location.href = '/login';
       return null;
@@ -56,53 +55,27 @@ function Portfolio() {
       window.location.href = '/login'; // Redirect to login
       return null;
     }
-  }, []); // Dependencies for useCallback
+  }, []);
 
-  // ADDITION/ALTERATION: Main function to fetch projects with authentication logic
+  // Main function to fetch projects with authentication logic
   const fetchProjects = useCallback(async () => {
     setLoading(true);
     setError(null);
     let accessToken = getAuthToken();
 
-    if (!accessToken) {
-      // If no token, or token expired, try to refresh
-      accessToken = await refreshAuthToken();
-      if (!accessToken) {
-        setLoading(false);
-        // User is not logged in or session expired. Portfolio might show public content
-        // or a message to log in. Given default IsAuthenticated, display error.
-        setError("Please log in to view projects.");
-        return;
-      }
+    // The ProjectListView is now public, so no token is strictly required for *fetching* the list.
+    // However, if other parts of your app or future features require authentication for some project details,
+    // this logic remains useful. For now, we allow fetching without a token for the public list.
+    let headers = {};
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
     }
 
     try {
-      const response = await fetch('https://website3-ho1y.onrender.com/api/portfolio/', {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`, // KEY ADDITION: Include the JWT token
-        },
-      });
+      const response = await fetch('https://website3-ho1y.onrender.com/api/portfolio/', { headers });
 
-      if (response.status === 401 || response.status === 403) {
-        // If 401/403, try refreshing token once
-        accessToken = await refreshAuthToken();
-        if (accessToken) {
-          // Retry request with new token
-          const retryResponse = await fetch('https://website3-ho1y.onrender.com/api/portfolio/', {
-            headers: {
-              'Authorization': `Bearer ${accessToken}`, // KEY ADDITION: Retry with new token
-            },
-          });
-          if (!retryResponse.ok) {
-            throw new Error('Failed to load projects after refresh.');
-          }
-          const data = await retryResponse.json();
-          setProjects(data);
-        } else {
-          // Still no valid token after refresh
-          throw new Error('Authentication required to view projects.');
-        }
-      } else if (!response.ok) {
+      if (!response.ok) {
+        // If the backend returns an error even for public access (e.g., 500), handle it.
         throw new Error('Failed to load projects');
       } else {
         const data = await response.json();
@@ -114,19 +87,18 @@ function Portfolio() {
     } finally {
       setLoading(false);
     }
-  }, [getAuthToken, refreshAuthToken]); // Include dependencies for useCallback
+  }, [getAuthToken]); // Removed refreshAuthToken from dependencies if not strictly needed for initial fetch
 
   useEffect(() => {
     fetchProjects();
-  }, [fetchProjects]); // Run fetchProjects when the component mounts or fetchProjects changes
+  }, [fetchProjects]);
 
-  // ALTERATION: Payment handlers now ensure token is present and send it
   const handleStripePayment = async (project) => {
     setPaymentLoading(`stripe-${project.id}`);
     const authToken = getAuthToken();
     if (!authToken) {
       alert("Please log in to make payments.");
-      // You might want to redirect to login page here
+      window.location.href = '/login';
       return;
     }
 
@@ -135,7 +107,7 @@ function Portfolio() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`, // KEY ADDITION: send token
+          'Authorization': `Bearer ${authToken}`,
         },
         body: JSON.stringify({ project_id: project.id }),
       });
@@ -146,7 +118,7 @@ function Portfolio() {
       }
 
       const data = await response.json();
-      window.location.href = data.checkout_url; // Redirect to Stripe checkout page
+      window.location.href = data.checkout_url;
     } catch (err) {
       alert(`Payment error: ${err.message}`);
       console.error('Stripe payment error:', err);
@@ -160,15 +132,14 @@ function Portfolio() {
     const authToken = getAuthToken();
     if (!authToken) {
       alert("Please log in to make payments.");
-      // You might want to redirect to login page here
+      window.location.href = '/login';
       return;
     }
 
-    // You might need to prompt for phone number here if not stored in user profile
     const phoneNumber = prompt("Please enter your M-Pesa phone number (e.g., 2547XXXXXXXX):");
     if (!phoneNumber) {
-        setPaymentLoading(null);
-        return; // User cancelled
+      setPaymentLoading(null);
+      return; // User cancelled
     }
 
     try {
@@ -176,7 +147,7 @@ function Portfolio() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`, // KEY ADDITION: send token
+          'Authorization': `Bearer ${authToken}`,
         },
         body: JSON.stringify({ project_id: project.id, phone_number: phoneNumber }),
       });
@@ -188,7 +159,6 @@ function Portfolio() {
 
       const data = await response.json();
       alert(data.message || 'M-Pesa payment initiated. Please check your phone.');
-      // You might want to periodically check status or listen for webhooks here
     } catch (err) {
       alert(`M-Pesa payment error: ${err.message}`);
       console.error('M-Pesa payment error:', err);
@@ -197,11 +167,24 @@ function Portfolio() {
     }
   };
 
-  // ALTERATION: Updated comment for clarity
+  // Modified handleFreeDownload to use project.download_url
   const handleFreeDownload = (project) => {
-    alert(`Downloading ${project.title} for free!`);
-    // TODO: Implement actual free download logic here (e.g., redirect to file)
+    if (project.download_url) {
+      window.open(project.download_url, '_blank'); // Open download URL in a new tab
+    } else {
+      alert(`No direct download link available for ${project.title}.`);
+    }
   };
+
+  // New function to handle visiting website projects
+  const handleVisitWebsite = (project) => {
+    if (project.website_url) {
+      window.open(project.website_url, '_blank'); // Open website URL in a new tab
+    } else {
+      alert(`No website URL available for ${project.title}.`);
+    }
+  };
+
 
   return (
     <div className={styles.portfolioPage}>
@@ -217,39 +200,57 @@ function Portfolio() {
           <ul className={styles.projectList}>
             {projects.map((project) => (
               <li key={project.id} className={styles.projectItem}>
+                {/* Display image if available */}
+                {project.image_url && (
+                  <img src={project.image_url} alt={project.title} className={styles.projectImage} />
+                )}
                 <h3 className={styles.projectTitle}>{project.title}</h3>
                 <p className={styles.projectDescription}>{project.description}</p>
                 <div className={styles.paymentSection}>
-                  {project.price > 0 ? (
-                    <>
-                      <button
-                        onClick={() => handleStripePayment(project)}
-                        disabled={paymentLoading === `stripe-${project.id}`}
-                        className={`${styles.paymentButton} ${styles.stripeButton} ${
-                          paymentLoading === `stripe-${project.id}` ? 'opacity-50 cursor-not-allowed' : ''
-                        }`}
-                      >
-                        {paymentLoading === `stripe-${project.id}` ? 'Processing...' : 'Pay with Card'}
-                        <span className={styles.priceText}>${project.price}</span>
-                      </button>
-                      <button
-                        onClick={() => handleMpesaPayment(project)}
-                        disabled={paymentLoading === `mpesa-${project.id}`}
-                        className={`${styles.paymentButton} ${styles.mpesaButton} ${
-                          paymentLoading === `mpesa-${project.id}` ? 'opacity-50 cursor-not-allowed' : ''
-                        }`}
-                      >
-                        {paymentLoading === `mpesa-${project.id}` ? 'Processing...' : 'Pay with M-Pesa'}
-                        <span className={styles.priceText}>${project.price}</span>
-                      </button>
-                    </>
-                  ) : (
+                  {project.project_type === 'website' && project.website_url ? (
+                    // Render "Visit Website" button for website projects
                     <button
-                      onClick={() => handleFreeDownload(project)}
-                      className={`${styles.paymentButton} ${styles.downloadButton}`}
+                      onClick={() => handleVisitWebsite(project)}
+                      className={`${styles.paymentButton} ${styles.websiteButton}`}
                     >
-                      Download Free
+                      Visit Website
                     </button>
+                  ) : project.project_type === 'program' ? (
+                    // Render payment/download options for program projects
+                    project.price > 0 ? (
+                      <>
+                        <button
+                          onClick={() => handleStripePayment(project)}
+                          disabled={paymentLoading === `stripe-${project.id}`}
+                          className={`${styles.paymentButton} ${styles.stripeButton} ${
+                            paymentLoading === `stripe-${project.id}` ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                        >
+                          {paymentLoading === `stripe-${project.id}` ? 'Processing...' : 'Pay with Card'}
+                          <span className={styles.priceText}>${project.price}</span>
+                        </button>
+                        <button
+                          onClick={() => handleMpesaPayment(project)}
+                          disabled={paymentLoading === `mpesa-${project.id}`}
+                          className={`${styles.paymentButton} ${styles.mpesaButton} ${
+                            paymentLoading === `mpesa-${project.id}` ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                        >
+                          {paymentLoading === `mpesa-${project.id}` ? 'Processing...' : 'Pay with M-Pesa'}
+                          <span className={styles.priceText}>${project.price}</span>
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => handleFreeDownload(project)}
+                        className={`${styles.paymentButton} ${styles.downloadButton}`}
+                      >
+                        Download Free
+                      </button>
+                    )
+                  ) : (
+                    // Fallback if project_type is not defined or unrecognized
+                    <p>Action not defined for this project type.</p>
                   )}
                 </div>
               </li>

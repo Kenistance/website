@@ -1,8 +1,10 @@
+# backend/portfolio/serializers.py
 from rest_framework import serializers
 from .models import Project
 
 class ProjectSerializer(serializers.ModelSerializer):
-    download_link = serializers.SerializerMethodField()
+    # Removed get_download_link as frontend will handle logic directly
+    # and use website_url or download_url based on project_type and price.
 
     class Meta:
         model = Project
@@ -10,15 +12,14 @@ class ProjectSerializer(serializers.ModelSerializer):
             'id',
             'title',
             'description',
-            'image_url',
+            'image_url',       # Keep this, your frontend uses 'image' which image_url can map to
             'created_at',
-            'requires_payment',
+            # 'requires_payment', # Removed, as price > 0 implies payment
             'price',
             'demo_url',
-            'download_link',  # dynamic field
+            # 'download_link',    # Removed, as frontend directly uses download_url or website_url
+            'download_url',    # Expose the direct download URL
+            # New fields
+            'project_type',
+            'website_url',
         ]
-
-    def get_download_link(self, obj):
-        if not obj.requires_payment:
-            return obj.download_url
-        return None  # or return a message like "Payment required"
