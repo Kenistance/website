@@ -13,8 +13,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from datetime import timedelta # ADDED: Import timedelta for JWT settings
 
-load_dotenv()  # Load variables from .env file if present
+load_dotenv()   # Load variables from .env file if present
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-default-key')  # default is fallback, replace in prod
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-default-key')   # default is fallback, replace in prod
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
     # Third-party apps
     'corsheaders',
     'rest_framework',
+    'rest_framework_simplejwt', # ADDED: simplejwt for JWT authentication
 
     # apps
     'portfolio',
@@ -52,10 +54,11 @@ INSTALLED_APPS = [
     'chat',
     'project_requests',
     'payments',
+    'users',
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # Must be high in the order
+    'corsheaders.middleware.CorsMiddleware',   # Must be high in the order
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -155,11 +158,11 @@ STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', 'your_stripe_secret_key')
 STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', 'your_stripe_publishable_key')
 
 # M-Pesa Settings
-MPESA_ENVIRONMENT = os.getenv('MPESA_ENVIRONMENT', 'sandbox')  # 'sandbox' or 'production'
+MPESA_ENVIRONMENT = os.getenv('MPESA_ENVIRONMENT', 'sandbox')   # 'sandbox' or 'production'
 MPESA_CONSUMER_KEY = 'Vq1GjoIdaLKAZfyWhov8HL8IAjNCwfNCqGBXczvnvTDM8Wxm'
 MPESA_CONSUMER_SECRET = 'UyYovjELndltcaQt4NfRJglZAv9aEXJUGzezOir6kUJ11qOCINPlWHerN7gOgYpP'
-MPESA_SHORTCODE = os.getenv('MPESA_SHORTCODE', '174379')  # Your business shortcode
-MPESA_PASSKEY = os.getenv('MPESA_PASSKEY', 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919')  # Sandbox passkey
+MPESA_SHORTCODE = os.getenv('MPESA_SHORTCODE', '174379')   # Your business shortcode
+MPESA_PASSKEY = os.getenv('MPESA_PASSKEY', 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919')   # Sandbox passkey
 MPESA_CALLBACK_URL = 'https://website3-ho1y.onrender.com/api/payments/mpesa-callback/'
 
 # M-Pesa API URLs
@@ -171,11 +174,12 @@ else:
 MPESA_ACCESS_TOKEN_URL = f'{MPESA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials'
 MPESA_STK_PUSH_URL = f'{MPESA_BASE_URL}/mpesa/stkpush/v1/processrequest'
 
-MEDIA_ROOT = BASE_DIR / 'media'  # if not set already
+MEDIA_ROOT = BASE_DIR / 'media'   # if not set already
 
-# REST Framework settings (if you need them)
+# REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication', # ADDED: JWT Authentication
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ],
@@ -183,6 +187,39 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
+
+# ADDED: Simple JWT Configuration
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60), # Access token valid for 60 minutes
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),   # Refresh token valid for 1 day
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'UPDATE_LAST_LOGIN': False,
+
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUDIENCE': None,
+    'ISSUER': None,
+    'JWK_URL': None,
+    'LEEWAY': 0,
+
+    'AUTH_HEADER_TYPES': ('Bearer',), # This is crucial: expect 'Bearer' in header
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+    'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser',
+
+    'JTI_CLAIM': 'jti',
+
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+}
+
 
 # Logging Configuration for debugging payments
 LOGGING = {
