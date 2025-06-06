@@ -1,58 +1,19 @@
+# backend/payments/views.py - Enhanced MpesaPaymentRequestView with better error handling
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from portfolio.models import Project
-from .utils import create_stripe_checkout_session, create_mpesa_payment_request, verify_mpesa_payment
+from .utils import create_mpesa_payment_request, verify_mpesa_payment
 from .serializers import PaymentSerializer
 from .models import Payment
 import logging
 import json
+from django.http import JsonResponse
 
 logger = logging.getLogger('payments')
-
-
-class StripeCheckoutSessionView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        project_id = request.data.get('project_id')
-        user = request.user
-
-        if not project_id:
-            return Response({"success": False, "error": "Project ID is required"}, status=400)
-
-        try:
-            project = Project.objects.get(id=project_id)
-        except Project.DoesNotExist:
-            return Response({"success": False, "error": "Project not found"}, status=404)
-
-        if not project.requires_payment:
-            return Response({"success": False, "error": "Project does not require payment"}, status=400)
-
-        logger.info(f"Creating Stripe session for user {user.id}, project {project_id}")
-
-        session_url = create_stripe_checkout_session(project, user)
-
-        if session_url:
-            payment = Payment.objects.create(
-                user=user,
-                project=project,
-                amount=project.price,
-                method='stripe',
-                status='pending'
-            )
-            serializer = PaymentSerializer(payment)
-            logger.info(f"Stripe payment record created: {payment.id}")
-            return Response({
-                "success": True,
-                "checkout_url": session_url,
-                "payment": serializer.data
-            })
-        else:
-            return Response({"success": False, "error": "Failed to create Stripe session"}, status=500)
-
 
 @method_decorator(csrf_exempt, name='dispatch')
 class MpesaPaymentRequestView(APIView):
@@ -60,20 +21,39 @@ class MpesaPaymentRequestView(APIView):
 
     def post(self, request):
         try:
+            # Log the incoming request for debugging
+            logger.info(f"M-Pesa payment request received")
+            logger.info(f"Request data: {request.data}")
+            logger.info(f"Request user: {request.user}")
+            logger.info(f"User authenticated: {request.user.is_authenticated}")
+            
+            # Extract data
             project_id = request.data.get('project_id')
             phone_number = request.data.get('phone_number')
             user = request.user
 
-            logger.info(f"M-Pesa payment request from user {user.id} for project {project_id}")
-
+            # Validate required fields
             if not project_id:
-                return Response({"success": False, "error": "Project ID is required"}, status=400)
+                logger.error("Missing project_id")
+                return Response({
+                    "success": False, 
+                    "error": "Project ID is required",
+                    "errorMessage": "Project ID is required"
+                }, status=400)
 
             if not phone_number:
-                return Response({"success": False, "error": "Phone number is required"}, status=400)
+                logger.error("Missing phone_number")
+                return Response({
+                    "success": False, 
+                    "error": "Phone number is required",
+                    "errorMessage": "Phone number is required"
+                }, status=400)
 
+            # Validate and format phone number
             phone_number = phone_number.strip()
             phone_digits = ''.join(filter(str.isdigit, phone_number))
+            
+            logger.info(f"Original phone: {phone_number}, Digits only: {phone_digits}")
 
             if phone_digits.startswith('0') and len(phone_digits) == 10:
                 phone_number = '254' + phone_digits[1:]
@@ -82,23 +62,38 @@ class MpesaPaymentRequestView(APIView):
             elif phone_digits.startswith('7') and len(phone_digits) == 9:
                 phone_number = '254' + phone_digits
             else:
+                logger.error(f"Invalid phone format: {phone_digits}")
                 return Response({
                     "success": False,
                     "error": "Invalid phone number format",
                     "errorMessage": "Please enter a valid Kenyan phone number (e.g., 0712345678 or 254712345678)"
                 }, status=400)
 
+            logger.info(f"Formatted phone number: {phone_number}")
+
+            # Validate project exists
             try:
                 project = Project.objects.get(id=project_id)
+                logger.info(f"Project found: {project.title}, Price: {project.price}, Requires payment: {project.requires_payment}")
             except Project.DoesNotExist:
-                return Response({"success": False, "error": "Project not found"}, status=404)
+                logger.error(f"Project not found: {project_id}")
+                return Response({
+                    "success": False, 
+                    "error": "Project not found",
+                    "errorMessage": "Project not found"
+                }, status=404)
 
             if not project.requires_payment:
-                return Response({"success": False, "error": "Project does not require payment"}, status=400)
+                logger.error(f"Project {project_id} doesn't require payment")
+                return Response({
+                    "success": False, 
+                    "error": "Project does not require payment",
+                    "errorMessage": "This project is free to download"
+                }, status=400)
 
-            logger.info(f"Processing M-Pesa payment: user={user.id}, project={project_id}, phone={phone_number}")
-
-            # Create pending payment record
+            # Create pending payment record first
+            logger.info(f"Creating payment record for user {user.id}, project {project_id}")
+            
             payment = Payment.objects.create(
                 user=user,
                 project=project,
@@ -106,7 +101,11 @@ class MpesaPaymentRequestView(APIView):
                 method='mpesa',
                 status='pending'
             )
+            
+            logger.info(f"Payment record created with ID: {payment.id}")
 
+            # Make M-Pesa API request
+            logger.info(f"Calling create_mpesa_payment_request")
             response_data = create_mpesa_payment_request(
                 phone_number=phone_number,
                 amount=float(project.price),
@@ -114,136 +113,57 @@ class MpesaPaymentRequestView(APIView):
                 user_id=user.id
             )
 
-            logger.info(f"M-Pesa API response: {response_data}")
+            logger.info(f"M-Pesa API response received: {response_data}")
 
             if response_data.get('success'):
-                payment.transaction_id = response_data.get('checkoutRequestID', '')
-                payment.save()
+                # Update payment with transaction ID
+                checkout_request_id = response_data.get('checkoutRequestID')
+                if checkout_request_id:
+                    payment.transaction_id = checkout_request_id
+                    payment.save()
+                    logger.info(f"Payment {payment.id} updated with transaction_id: {checkout_request_id}")
+
                 serializer = PaymentSerializer(payment)
                 return Response({
                     "success": True,
                     "payment": serializer.data,
-                    "message": "M-Pesa request sent"
+                    "message": response_data.get('message', 'M-Pesa payment request sent successfully'),
+                    "checkoutRequestID": checkout_request_id
                 })
             else:
+                # Delete the payment record if M-Pesa request failed
+                logger.error(f"M-Pesa request failed, deleting payment record {payment.id}")
                 payment.delete()
+                
+                error_msg = response_data.get('errorMessage', response_data.get('error', 'M-Pesa payment request failed'))
+                
                 return Response({
                     "success": False,
                     "error": response_data.get('error', 'M-Pesa payment failed'),
-                    "details": response_data.get('details', '')
-                }, status=500)
+                    "errorMessage": error_msg
+                }, status=400)
 
         except Exception as e:
-            logger.exception("Unexpected error in MpesaPaymentRequestView")
+            logger.exception(f"Unexpected error in MpesaPaymentRequestView: {str(e)}")
+            
+            # Make sure we always return JSON
             return Response({
                 "success": False,
-                "error": "Server error while processing payment",
-                "details": str(e)
+                "error": f"Server error: {str(e)}",
+                "errorMessage": "An unexpected error occurred. Please try again."
             }, status=500)
 
-
-@method_decorator(csrf_exempt, name='dispatch')
-class MpesaCallbackView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        callback_data = request.data
-        logger.info(f"M-Pesa callback received: {json.dumps(callback_data, indent=2)}")
-
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to ensure we always return JSON responses"""
         try:
-            # Parse M-Pesa callback data structure
-            stk_callback = callback_data.get('Body', {}).get('stkCallback', {})
-            
-            if not stk_callback:
-                logger.error("Invalid callback format - no stkCallback found")
-                return Response({"ResultCode": 1, "ResultDesc": "Invalid callback format"})
-            
-            checkout_request_id = stk_callback.get('CheckoutRequestID')
-            result_code = stk_callback.get('ResultCode')
-            result_desc = stk_callback.get('ResultDesc')
-            
-            logger.info(f"Callback details: CheckoutRequestID={checkout_request_id}, ResultCode={result_code}")
-            
-            if not checkout_request_id:
-                logger.error("No CheckoutRequestID in callback")
-                return Response({"ResultCode": 1, "ResultDesc": "No CheckoutRequestID"})
-
-            # Find the payment record
-            try:
-                payment = Payment.objects.get(
-                    transaction_id=checkout_request_id,
-                    method='mpesa'
-                )
-            except Payment.DoesNotExist:
-                logger.error(f"Payment record not found for CheckoutRequestID: {checkout_request_id}")
-                return Response({"ResultCode": 1, "ResultDesc": "Payment record not found"})
-
-            # Update payment status based on result code
-            if result_code == 0:
-                # Payment successful
-                payment.status = 'completed'
-                
-                # Extract additional payment details if available
-                callback_metadata = stk_callback.get('CallbackMetadata', {})
-                items = callback_metadata.get('Item', [])
-                
-                for item in items:
-                    if item.get('Name') == 'MpesaReceiptNumber':
-                        # Store the M-Pesa receipt number as transaction ID
-                        payment.transaction_id = item.get('Value', checkout_request_id)
-                        break
-                
-                logger.info(f"Payment {payment.id} marked as completed")
-                
-            elif result_code == 1032:
-                # Payment cancelled by user
-                payment.status = 'failed'
-                logger.info(f"Payment {payment.id} cancelled by user")
-                
-            else:
-                # Payment failed
-                payment.status = 'failed'
-                logger.info(f"Payment {payment.id} failed with result code: {result_code}")
-
-            payment.save()
-            
-            return Response({
-                "ResultCode": 0,
-                "ResultDesc": "Callback processed successfully"
-            })
-            
+            response = super().dispatch(request, *args, **kwargs)
+            logger.info(f"Response status: {response.status_code}")
+            return response
         except Exception as e:
-            logger.error(f"Error processing M-Pesa callback: {e}")
-            return Response({
-                "ResultCode": 1,
-                "ResultDesc": f"Error processing callback: {str(e)}"
-            })
-
-
-class MpesaPaymentStatusView(APIView):
-    """
-    View to check the status of an M-Pesa payment
-    """
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, payment_id):
-        try:
-            payment = Payment.objects.get(id=payment_id, user=request.user, method='mpesa')
-        except Payment.DoesNotExist:
-            return Response({"error": "Payment not found"}, status=404)
-
-        # If payment is still pending, try to verify with M-Pesa
-        if payment.status == 'pending' and payment.transaction_id:
-            verification_result = verify_mpesa_payment(payment.transaction_id)
-            
-            if verification_result.get('success'):
-                result_code = verification_result.get('result_code')
-                if result_code == '0':
-                    payment.status = 'completed'
-                    payment.save()
-                elif result_code in ['1032', '1037']:  # Cancelled or failed
-                    payment.status = 'failed'
-                    payment.save()
-
-        serializer = PaymentSerializer(payment)
-        return Response(serializer.data)
+            logger.exception(f"Error in dispatch: {str(e)}")
+            # Always return JSON even if there's an unexpected error
+            return JsonResponse({
+                "success": False,
+                "error": f"Dispatch error: {str(e)}",
+                "errorMessage": "An unexpected error occurred. Please try again."
+            }, status=500)
