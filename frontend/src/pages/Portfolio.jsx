@@ -9,11 +9,38 @@ function Portfolio() {
   const [error, setError] = useState(null)
   const [paymentLoading, setPaymentLoading] = useState(null) // Track which payment is processing
 
+  // Helper function to get auth token (if you're using token auth)
+  function getAuthToken() {
+    // Return your auth token here - this depends on how you store it
+    // For example, if using localStorage:
+    // return localStorage.getItem('authToken')
+    // Or if using cookies, the browser will handle it automatically with credentials: 'include'
+    return localStorage.getItem('authToken') // Adjust based on your auth system
+  }
+
   useEffect(() => {
-    fetch('https://website3-ho1y.onrender.com/api/portfolio/')
+    const authToken = getAuthToken();
+    const headers = {};
+
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`; // Adjust format based on your auth system (e.g., 'Token', 'Bearer')
+    }
+
+    fetch('https://website3-ho1y.onrender.com/api/portfolio/', {
+      method: 'GET',
+      headers: headers,
+      credentials: 'include', // Important for sending cookies/session with the request
+    })
       .then((res) => {
-        if (!res.ok) throw new Error('Failed to load projects')
-        return res.json()
+        if (!res.ok) {
+          // Attempt to read error message from response body if available
+          return res.json().catch(() => {
+            throw new Error(`HTTP ${res.status}: Failed to load projects`);
+          }).then(errorData => {
+            throw new Error(errorData.detail || errorData.error || `HTTP ${res.status}: Failed to load projects`);
+          });
+        }
+        return res.json();
       })
       .then((data) => {
         setProjects(data)
@@ -25,15 +52,6 @@ function Portfolio() {
         setLoading(false)
       })
   }, [])
-
-  // Helper function to get auth token (if you're using token auth)
-  function getAuthToken() {
-    // Return your auth token here - this depends on how you store it
-    // For example, if using localStorage:
-    // return localStorage.getItem('authToken')
-    // Or if using cookies, the browser will handle it automatically with credentials: 'include'
-    return localStorage.getItem('authToken') // Adjust based on your auth system
-  }
 
   // Called when a project is free to download
   function handleFreeDownload(project) {
@@ -79,9 +97,9 @@ function Portfolio() {
       .then((data) => {
         console.log('Stripe response:', data)
         // Check for success and checkout_url
-        if (data.success && data.checkout_url) {
-          window.location.href = data.checkout_url
-        } else if (data.checkout_url) {
+        if (data.success && data.redirect_url) { // Changed to redirect_url based on views.py
+          window.location.href = data.redirect_url
+        } else if (data.checkout_url) { // Keep for backward compatibility if needed
           window.location.href = data.checkout_url
         } else {
           throw new Error(data.error || 'Unable to get checkout URL')
