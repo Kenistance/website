@@ -123,3 +123,32 @@
     padding: 10px;
   }
 }
+
+
+/* Add this to your existing Navbar.css */
+.navbar-links .logout-button {
+  background: none;
+  border: none;
+  color: #fff; /* Or whatever your link color is */
+  cursor: pointer;
+  font-size: 1em; /* Match your nav-link font size */
+  padding: 0; /* Remove default button padding */
+  text-decoration: none; /* Remove default underline */
+  transition: color 0.3s ease;
+}
+
+.navbar-links .logout-button:hover {
+  color: #ffc107; /* Or your hover color */
+  text-decoration: underline;
+}
+
+/* Ensure NavLink styling for active state is consistent */
+.nav-link {
+  /* ... existing styles for nav links ... */
+  text-decoration: none; /* Remove default underline */
+}
+
+.nav-link.active {
+  /* ... existing active styles ... */
+  font-weight: bold; /* Example active style */
+}

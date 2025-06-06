@@ -1,255 +1,220 @@
-import React, { useEffect, useState } from 'react'
-import TunnelGridBackground from '../components/TunnelGridBackground'
-import CompletedProjectsHeader from '../components/CompletedProjectsHeader'
-import styles from '../styles/Portfolio.module.css'
+// src/pages/Portfolio.jsx
+import React, { useEffect, useState, useCallback } from 'react';
+import TunnelGridBackground from '../components/TunnelGridBackground';
+import CompletedProjectsHeader from '../components/CompletedProjectsHeader';
+import styles from '../styles/Portfolio.module.css';
 
 function Portfolio() {
-  const [projects, setProjects] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [paymentLoading, setPaymentLoading] = useState(null) // Track which payment is processing
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [paymentLoading, setPaymentLoading] = useState(null); // Track which payment is processing
 
-  // Helper function to get auth token (if you're using token auth)
-  function getAuthToken() {
-    // Return your auth token here - this depends on how you store it
-    // For example, if using localStorage:
-    // return localStorage.getItem('authToken')
-    // Or if using cookies, the browser will handle it automatically with credentials: 'include'
-    return localStorage.getItem('authToken') // Adjust based on your auth system
-  }
+  // Helper function to get auth token
+  const getAuthToken = useCallback(() => {
+    return localStorage.getItem('accessToken');
+  }, []);
+
+  // Function to refresh token if necessary
+  const refreshAuthToken = async () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) {
+      console.warn("No refresh token found. User needs to log in.");
+      return null;
+    }
+
+    try {
+      const response = await fetch('https://website3-ho1y.onrender.com/api/users/token/refresh/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refresh: refreshToken }),
+      });
+
+      if (!response.ok) {
+        console.error("Failed to refresh token:", await response.json());
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        alert("Session expired. Please log in again.");
+        window.location.href = '/login'; // Redirect to login
+        return null;
+      }
+
+      const data = await response.json();
+      localStorage.setItem('accessToken', data.access);
+      console.log("Access token refreshed.");
+      return data.access;
+    } catch (err) {
+      console.error("Error refreshing token:", err);
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      alert("Error refreshing session. Please log in again.");
+      window.location.href = '/login'; // Redirect to login
+      return null;
+    }
+  };
+
+  const fetchProjects = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    let accessToken = getAuthToken();
+
+    if (!accessToken) {
+      // If no token, or token expired, try to refresh
+      accessToken = await refreshAuthToken();
+      if (!accessToken) {
+        setLoading(false);
+        // User is not logged in or session expired, Portfolio might show public content
+        // or a message to log in. For now, it will show error as IsAuthenticated is default.
+        setError("Please log in to view projects.");
+        return;
+      }
+    }
+
+    try {
+      const response = await fetch('https://website3-ho1y.onrender.com/api/portfolio/', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`, // Include the JWT token
+        },
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        // If 401/403, try refreshing token once
+        accessToken = await refreshAuthToken();
+        if (accessToken) {
+          // Retry request with new token
+          const retryResponse = await fetch('https://website3-ho1y.onrender.com/api/portfolio/', {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+            },
+          });
+          if (!retryResponse.ok) {
+            throw new Error('Failed to load projects after refresh.');
+          }
+          const data = await retryResponse.json();
+          setProjects(data);
+        } else {
+          // Still no valid token after refresh
+          throw new Error('Authentication required to view projects.');
+        }
+      } else if (!response.ok) {
+        throw new Error('Failed to load projects');
+      } else {
+        const data = await response.json();
+        setProjects(data);
+      }
+    } catch (err) {
+      console.error('Error fetching projects:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [getAuthToken, refreshAuthToken]); // Include dependencies
 
   useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]); // Run fetchProjects when the component mounts or fetchProjects changes
+
+  const handleStripePayment = async (project) => {
+    setPaymentLoading(`stripe-${project.id}`);
     const authToken = getAuthToken();
-    const headers = {};
-
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`; // Adjust format based on your auth system (e.g., 'Token', 'Bearer')
+    if (!authToken) {
+      alert("Please log in to make payments.");
+      // You might want to redirect to login page here
+      return;
     }
 
-    fetch('https://website3-ho1y.onrender.com/api/portfolio/', {
-      method: 'GET',
-      headers: headers,
-      credentials: 'include', // Important for sending cookies/session with the request
-    })
-      .then((res) => {
-        if (!res.ok) {
-          // Attempt to read error message from response body if available
-          return res.json().catch(() => {
-            throw new Error(`HTTP ${res.status}: Failed to load projects`);
-          }).then(errorData => {
-            throw new Error(errorData.detail || errorData.error || `HTTP ${res.status}: Failed to load projects`);
-          });
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setProjects(data)
-        setLoading(false)
-      })
-      .catch((err) => {
-        console.error('Error fetching projects:', err)
-        setError(err.message)
-        setLoading(false)
-      })
-  }, [])
+    try {
+      const response = await fetch('https://website3-ho1y.onrender.com/api/payments/stripe-checkout/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`, // Important: send token
+        },
+        body: JSON.stringify({ project_id: project.id }),
+      });
 
-  // Called when a project is free to download
-  function handleFreeDownload(project) {
-    if (project.download_link) {
-      // Open the public URL in a new tab
-      window.open(project.download_link, '_blank')
-    } else {
-      // Fallback: call your backend download endpoint
-      window.location.href = `https://website3-ho1y.onrender.com/api/portfolio/${project.id}/download/`
-    }
-  }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Stripe checkout failed');
+      }
 
-  // Start a Stripe checkout session
-  function handleStripePayment(project) {
-    if (paymentLoading) return // Prevent multiple simultaneous requests
-    
-    setPaymentLoading(`stripe-${project.id}`)
-    
-    const authToken = getAuthToken()
-    const headers = {
-      'Content-Type': 'application/json',
+      const data = await response.json();
+      window.location.href = data.checkout_url; // Redirect to Stripe checkout page
+    } catch (err) {
+      alert(`Payment error: ${err.message}`);
+      console.error('Stripe payment error:', err);
+    } finally {
+      setPaymentLoading(null);
     }
-    
-    // Add authorization header if token exists
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}` // Adjust format based on your auth system
+  };
+
+  const handleMpesaPayment = async (project) => {
+    setPaymentLoading(`mpesa-${project.id}`);
+    const authToken = getAuthToken();
+    if (!authToken) {
+      alert("Please log in to make payments.");
+      // You might want to redirect to login page here
+      return;
     }
 
-    fetch('https://website3-ho1y.onrender.com/api/payments/stripe-checkout/', {
-      method: 'POST',
-      headers: headers,
-      credentials: 'include', // include cookies/auth
-      body: JSON.stringify({ project_id: project.id }),
-    })
-      .then((res) => {
-        if (!res.ok) {
-          return res.json().then(errorData => {
-            throw new Error(errorData.error || `HTTP ${res.status}: Could not create Stripe session`)
-          })
-        }
-        return res.json()
-      })
-      .then((data) => {
-        console.log('Stripe response:', data)
-        // Check for success and checkout_url
-        if (data.success && data.redirect_url) { // Changed to redirect_url based on views.py
-          window.location.href = data.redirect_url
-        } else if (data.checkout_url) { // Keep for backward compatibility if needed
-          window.location.href = data.checkout_url
-        } else {
-          throw new Error(data.error || 'Unable to get checkout URL')
-        }
-      })
-      .catch((err) => {
-        console.error('Stripe payment error:', err)
-        alert('Error starting card payment: ' + err.message)
-      })
-      .finally(() => {
-        setPaymentLoading(null)
-      })
-  }
-
-  // Validate phone number format
-  function validatePhoneNumber(phone) {
-    // Remove any spaces, dashes, or other characters
-    const cleaned = phone.replace(/[\s\-\(\)]/g, '')
-    
-    // Check if it starts with 254 and has correct length
-    if (cleaned.startsWith('254') && cleaned.length === 12) {
-      return cleaned
-    }
-    
-    // If it starts with 0, replace with 254
-    if (cleaned.startsWith('0') && cleaned.length === 10) {
-      return '254' + cleaned.substring(1)
-    }
-    
-    // If it starts with 7 and has 9 digits, add 254
-    if (cleaned.startsWith('7') && cleaned.length === 9) {
-      return '254' + cleaned
-    }
-    
-    return null
-  }
-
-  // Start an Mpesa payment request
-  function handleMpesaPayment(project) {
-    if (paymentLoading) return // Prevent multiple simultaneous requests
-    
-    const phoneInput = prompt('Enter your M-Pesa phone number:\n(Format: 0712345678 or 254712345678)')
-    if (!phoneInput) return
-
-    const validatedPhone = validatePhoneNumber(phoneInput.trim())
-    if (!validatedPhone) {
-      alert('Invalid phone number format. Please use format: 0712345678 or 254712345678')
-      return
+    // You might need to prompt for phone number here if not stored in user profile
+    const phoneNumber = prompt("Please enter your M-Pesa phone number (e.g., 2547XXXXXXXX):");
+    if (!phoneNumber) {
+        setPaymentLoading(null);
+        return; // User cancelled
     }
 
-    setPaymentLoading(`mpesa-${project.id}`)
+    try {
+      const response = await fetch('https://website3-ho1y.onrender.com/api/payments/mpesa-payment/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`, // Important: send token
+        },
+        body: JSON.stringify({ project_id: project.id, phone_number: phoneNumber }),
+      });
 
-    const authToken = getAuthToken()
-    const headers = {
-      'Content-Type': 'application/json',
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.errorMessage || 'M-Pesa payment failed');
+      }
+
+      const data = await response.json();
+      alert(data.message || 'M-Pesa payment initiated. Please check your phone.');
+      // You might want to periodically check status or listen for webhooks here
+    } catch (err) {
+      alert(`M-Pesa payment error: ${err.message}`);
+      console.error('M-Pesa payment error:', err);
+    } finally {
+      setPaymentLoading(null);
     }
-    
-    // Add authorization header if token exists
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}` // Adjust format based on your auth system
-    }
+  };
 
-    fetch('https://website3-ho1y.onrender.com/api/payments/mpesa-payment/', {
-      method: 'POST',
-      headers: headers,
-      credentials: 'include',
-      body: JSON.stringify({
-        project_id: project.id,
-        phone_number: validatedPhone,
-      }),
-    })
-      .then((res) => {
-        if (!res.ok) {
-          return res.json().then(errorData => {
-            throw new Error(errorData.error || errorData.errorMessage || `HTTP ${res.status}: M-Pesa request failed`)
-          })
-        }
-        return res.json()
-      })
-      .then((data) => {
-        console.log('M-Pesa response:', data)
-        
-        if (data.success) {
-          alert('M-Pesa payment prompt sent to your phone. Please check your phone and enter your M-Pesa PIN to complete the payment.')
-        } else {
-          // Show the specific error message from the backend
-          const errorMsg = data.errorMessage || data.error || 'M-Pesa payment request failed'
-          alert('M-Pesa Error: ' + errorMsg)
-          console.error('M-Pesa error details:', data)
-        }
-      })
-      .catch((err) => {
-        console.error('M-Pesa payment error:', err)
-        alert('Error initiating M-Pesa payment: ' + err.message)
-      })
-      .finally(() => {
-        setPaymentLoading(null)
-      })
-  }
-
-  if (loading) {
-    return (
-      <div className="relative min-h-screen bg-gradient-to-b from-black via-gray-900 to-black">
-        <TunnelGridBackground />
-        <div className="relative z-10 p-8 max-w-5xl mx-auto text-white">
-          <CompletedProjectsHeader />
-          <p className="text-lg animate-pulse">Loading projects...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="relative min-h-screen bg-gradient-to-b from-black via-gray-900 to-black">
-        <TunnelGridBackground />
-        <div className="relative z-10 p-8 max-w-5xl mx-auto text-white">
-          <CompletedProjectsHeader />
-          <p className="text-lg text-red-300">Error: {error}</p>
-        </div>
-      </div>
-    )
-  }
+  const handleFreeDownload = (project) => {
+    alert(`Downloading ${project.title} for free! (Not implemented yet)`);
+    // Implement actual free download logic here (e.g., redirect to file)
+  };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-black via-gray-900 to-black">
+    <div className={styles.portfolioPage}>
       <TunnelGridBackground />
-
-      <div className="relative z-10 p-8 max-w-5xl mx-auto text-white">
+      <div className={styles.content}>
         <CompletedProjectsHeader />
-
-        {projects.length === 0 ? (
-          <p className="text-lg text-red-300">No projects found.</p>
-        ) : (
+        {loading && <p>Loading projects...</p>}
+        {error && <p className={styles.error}>Error: {error}</p>}
+        {!loading && !error && projects.length === 0 && (
+          <p>No projects available. Please log in or check your backend.</p>
+        )}
+        {!loading && !error && projects.length > 0 && (
           <ul className={styles.projectList}>
             {projects.map((project) => (
               <li key={project.id} className={styles.projectItem}>
-                <h2 className={styles.projectTitle}>{project.title}</h2>
+                <h3 className={styles.projectTitle}>{project.title}</h3>
                 <p className={styles.projectDescription}>{project.description}</p>
-                {project.image_url && (
-                  <img
-                    src={project.image_url}
-                    alt={project.title}
-                    className={styles.projectImage}
-                  />
-                )}
-
-                {/* Styled payment buttons section */}
-                <div className={styles.paymentContainer}>
-                  {project.requires_payment ? (
+                <div className={styles.paymentSection}>
+                  {project.price > 0 ? (
                     <>
                       <button
                         onClick={() => handleStripePayment(project)}
@@ -287,7 +252,7 @@ function Portfolio() {
         )}
       </div>
     </div>
-  )
+  );
 }
 
-export default Portfolio
+export default Portfolio;
