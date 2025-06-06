@@ -7,6 +7,7 @@ from datetime import datetime
 from django.conf import settings
 from django.utils import timezone
 import logging
+import json 
 
 logger = logging.getLogger('payments')
 stripe.api_key = settings.STRIPE_SECRET_KEY
