@@ -123,6 +123,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# CRITICAL: Set the custom user model - THIS WAS MISSING!
+AUTH_USER_MODEL = 'users.CustomUser'
+
 
 # CORS settings - allow your React dev server origin here
 CORS_ALLOWED_ORIGINS = [

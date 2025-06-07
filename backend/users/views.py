@@ -9,7 +9,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import force_bytes, smart_str
 from django.utils.http import urlsafe_base64_encode
-from django.template.loader import render_to_string
 from django.core.mail import send_mail
 from django.conf import settings
 import logging
@@ -111,19 +110,24 @@ class PasswordResetRequestView(generics.GenericAPIView):
             token = PasswordResetTokenGenerator().make_token(user)
 
             # Construct the reset link (adjust 'frontend_url' as per your frontend application)
-            # You might want to get the domain dynamically from the request or settings
-            # For simplicity, we assume a fixed domain or it's provided by the frontend.
-            # Example: http://localhost:3000/reset-password/uidb64/token
             frontend_url = getattr(settings, 'FRONTEND_PASSWORD_RESET_URL', 'http://localhost:3000/reset-password')
             reset_link = f"{frontend_url}/{uidb64}/{token}/"
 
-            # Render email content
+            # Create simple email content without template
             email_subject = "Password Reset Request"
-            email_body = render_to_string('email/password_reset_email.html', {
-                'user': user,
-                'reset_link': reset_link,
-                'domain': request.META.get('HTTP_HOST') or 'yourdomain.com', # Use request host or a fallback
-            })
+            email_body = f"""
+            Hi {user.username},
+
+            You requested a password reset for your account.
+
+            Click the link below to reset your password:
+            {reset_link}
+
+            If you didn't request this, please ignore this email.
+
+            Best regards,
+            Your Website Team
+            """
 
             send_mail(
                 email_subject,
