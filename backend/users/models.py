@@ -1,20 +1,17 @@
-# users/models.py
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 class CustomUser(AbstractUser):
-    # Resolve reverse accessor clashes for 'groups' and 'user_permissions'
     groups = models.ManyToManyField(
         'auth.Group',
-        related_name='custom_user_set', # Unique related_name for CustomUser groups
+        related_name='user_set',  # Match migration default
         blank=True,
-        help_text='The groups this user belongs to. A user will get all permissions '
-                  'granted to each of their groups.',
+        help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.',
         verbose_name='groups',
     )
     user_permissions = models.ManyToManyField(
         'auth.Permission',
-        related_name='custom_user_permissions_set', # Unique related_name for CustomUser user_permissions
+        related_name='user_set',  # Match migration default
         blank=True,
         help_text='Specific permissions for this user.',
         verbose_name='user permissions',
