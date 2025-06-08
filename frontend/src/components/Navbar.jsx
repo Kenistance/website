@@ -1,39 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom'; // Import useNavigate
+import React, { useContext, useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import '../styles/Navbar.css';
+import { AuthContext } from '../context/AuthContext'; // ✅ Import the context
 
 function Navbar() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { isLoggedIn, logout } = useContext(AuthContext); // ✅ Use the context
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Check login status on component mount and when local storage changes
-  useEffect(() => {
-    const checkLoginStatus = () => {
-      const token = localStorage.getItem('accessToken');
-      setIsLoggedIn(!!token); // Set to true if token exists, false otherwise
-    };
-
-    checkLoginStatus(); // Initial check
-
-    // Optional: Listen for changes in localStorage from other tabs/windows
-    window.addEventListener('storage', checkLoginStatus);
-    return () => {
-      window.removeEventListener('storage', checkLoginStatus);
-    };
-  }, []);
-
   const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    setIsLoggedIn(false); // Update state to reflect logout
+    logout(); // ✅ Use the logout function from context
     alert('Logged out successfully!');
-    navigate('/login'); // Redirect to login page after logout
+    navigate('/login');
   };
+
+  const toggleMenu = () => setMenuOpen(!menuOpen);
 
   return (
     <nav className="navbar">
-      <div className="navbar-logo">Code 254</div>
-      <ul className="navbar-links">
+      <div className="navbar-header">
+        <div className="navbar-logo">Code 254</div>
+        <div className="hamburger" onClick={toggleMenu}>
+          ☰
+        </div>
+      </div>
+      <ul className={`navbar-links ${menuOpen ? 'open' : ''}`}>
         <li>
           <NavLink to="/" end className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
             Home
@@ -54,7 +45,7 @@ function Navbar() {
             Requests
           </NavLink>
         </li>
-        {/* Conditional authentication links */}
+
         {!isLoggedIn ? (
           <>
             <li>

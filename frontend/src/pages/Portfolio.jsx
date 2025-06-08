@@ -1,6 +1,6 @@
 // src/pages/Portfolio.jsx
 import React, { useEffect, useState, useCallback } from 'react';
-import TunnelGridBackground from '../components/TunnelGridBackground'; // <--- Keep this import
+import TunnelGridBackground from '../components/TunnelGridBackground';
 import CompletedProjectsHeader from '../components/CompletedProjectsHeader';
 import styles from '../styles/Portfolio.module.css';
 
@@ -10,12 +10,12 @@ function Portfolio() {
   const [error, setError] = useState(null);
   const [paymentLoading, setPaymentLoading] = useState(null); // Track which payment is processing
 
-  // Helper function to get auth token from localStorage
+  // Get auth token from localStorage
   const getAuthToken = useCallback(() => {
     return localStorage.getItem('accessToken');
   }, []);
 
-  // Function to refresh token if necessary
+  // Refresh token if expired or missing
   const refreshAuthToken = useCallback(async () => {
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) {
@@ -28,187 +28,135 @@ function Portfolio() {
     try {
       const response = await fetch('https://website3-ho1y.onrender.com/api/users/token/refresh/', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh: refreshToken }),
       });
 
       if (!response.ok) {
-        console.error("Failed to refresh token:", await response.json());
+        const errorText = await response.text();
+        console.error("Failed to refresh token. Server response:", errorText);
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        alert("Session expired. Please log in again.");
-        window.location.href = '/login'; // Redirect to login
+        alert("Session expired or invalid. Please log in again.");
+        window.location.href = '/login';
         return null;
       }
 
       const data = await response.json();
       localStorage.setItem('accessToken', data.access);
-      console.log("Access token refreshed.");
+      // Update refresh token if new one is returned (sliding tokens)
+      if (data.refresh) {
+        localStorage.setItem('refreshToken', data.refresh);
+      }
+      console.log("Token refreshed successfully.");
       return data.access;
     } catch (err) {
       console.error("Error refreshing token:", err);
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
-      alert("Error refreshing session. Please log in again.");
-      window.location.href = '/login'; // Redirect to login
+      alert("An error occurred during session refresh. Please log in again.");
+      window.location.href = '/login';
       return null;
     }
   }, []);
 
-  // Main function to fetch projects with authentication logic
+  // Fetch portfolio projects with token management
   const fetchProjects = useCallback(async () => {
     setLoading(true);
     setError(null);
-    let accessToken = getAuthToken();
 
-    let headers = {};
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
+    let token = getAuthToken();
+
+    if (!token) {
+      token = await refreshAuthToken();
+      if (!token) {
+        setLoading(false);
+        return;
+      }
     }
 
     try {
-      const response = await fetch('https://website3-ho1y.onrender.com/api/portfolio/', { headers });
+      let response = await fetch('https://website3-ho1y.onrender.com/api/portfolio/', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // If token expired, try to refresh once more and retry request
+      if (response.status === 401) {
+        console.warn("Access token expired. Attempting to refresh...");
+        token = await refreshAuthToken();
+        if (token) {
+          response = await fetch('https://website3-ho1y.onrender.com/api/portfolio/', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        } else {
+          // redirect handled in refreshAuthToken
+          return;
+        }
+      }
 
       if (!response.ok) {
-        throw new Error('Failed to load projects');
-      } else {
-        const data = await response.json();
-        setProjects(data);
+        const errorText = await response.text();
+        console.error("Error fetching portfolio data:", errorText);
+        setError(`Failed to load portfolio data. Server response: ${response.status} ${response.statusText}. Check console for details.`);
+        return;
       }
+
+      const data = await response.json();
+      setProjects(data);
     } catch (err) {
-      console.error('Error fetching projects:', err);
-      setError(err.message);
+      console.error("Network or parsing error fetching portfolio:", err);
+      setError(`Failed to connect to the server or parse data: ${err.message}`);
     } finally {
       setLoading(false);
     }
-  }, [getAuthToken]);
+  }, [getAuthToken, refreshAuthToken]);
 
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
 
-  const handleStripePayment = async (project) => {
-    setPaymentLoading(`stripe-${project.id}`);
-    const authToken = getAuthToken();
-    if (!authToken) {
-      alert("Please log in to make payments.");
-      window.location.href = '/login';
-      return;
-    }
-
-    try {
-      const response = await fetch('https://website3-ho1y.onrender.com/api/payments/stripe-checkout/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({ project_id: project.id }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Stripe checkout failed');
-      }
-
-      const data = await response.json();
-      window.location.href = data.checkout_url;
-    } catch (err) {
-      alert(`Payment error: ${err.message}`);
-      console.error('Stripe payment error:', err);
-    } finally {
-      setPaymentLoading(null);
-    }
+  // Payment handlers - these should ideally also handle loading state and token refresh if calling APIs
+  const handleStripePayment = (project) => {
+    alert(`Stripe payment for ${project.title} - $${project.price}`);
+    console.log("Stripe payment initiated for project:", project);
   };
 
-  const handleMpesaPayment = async (project) => {
-    setPaymentLoading(`mpesa-${project.id}`);
-    const authToken = getAuthToken();
-    if (!authToken) {
-      alert("Please log in to make payments.");
-      window.location.href = '/login';
-      return;
-    }
-
-    const phoneNumber = prompt("Please enter your M-Pesa phone number (e.g., 2547XXXXXXXX):");
-    if (!phoneNumber) {
-      setPaymentLoading(null);
-      return; // User cancelled
-    }
-
-    try {
-      const response = await fetch('https://website3-ho1y.onrender.com/api/payments/mpesa-payment/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({ project_id: project.id, phone_number: phoneNumber }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.errorMessage || 'M-Pesa payment failed');
-      }
-
-      const data = await response.json();
-      alert(data.message || 'M-Pesa payment initiated. Please check your phone.');
-    } catch (err) {
-      alert(`M-Pesa payment error: ${err.message}`);
-      console.error('M-Pesa payment error:', err);
-    } finally {
-      setPaymentLoading(null);
-    }
+  const handleMpesaPayment = (project) => {
+    alert(`M-Pesa payment for ${project.title} - $${project.price}`);
+    console.log("M-Pesa payment initiated for project:", project);
   };
 
   const handleFreeDownload = (project) => {
-    if (project.download_url) {
-      window.open(project.download_url, '_blank'); // Open download URL in a new tab
-    } else {
-      alert(`No direct download link available for ${project.title}.`);
-    }
-  };
-
-  const handleVisitWebsite = (project) => {
-    if (project.website_url) {
-      window.open(project.website_url, '_blank'); // Open website URL in a new tab
-    } else {
-      alert(`No website URL available for ${project.title}.`);
-    }
+    alert(`Downloading ${project.title} for free.`);
+    console.log("Free download initiated for project:", project);
   };
 
   return (
-    <div className={styles.portfolioPage}>
-      {/* Ensure TunnelGridBackground is rendered *before* other content if it needs to be behind */}
-      <TunnelGridBackground /> {/* <--- RE-ADDED HERE */}
-      <div className={styles.content}>
-        <CompletedProjectsHeader />
-        {loading && <p>Loading projects...</p>}
-        {error && <p className={styles.error}>Error: {error}</p>}
+    <div className={styles.portfolioContainer}>
+      <TunnelGridBackground />
+      <CompletedProjectsHeader />
+      <div className={styles.projectsContent}>
+        {loading && <p className={styles.loadingMessage}>Loading projects...</p>}
+        {error && <p className={styles.errorMessage}>Error: {error}</p>}
         {!loading && !error && projects.length === 0 && (
-          <p>No projects available. Please log in or check your backend.</p>
+          <p className={styles.noProjects}>No projects to display yet.</p>
         )}
         {!loading && !error && projects.length > 0 && (
-          <ul className={styles.projectList}>
+          <ul className={styles.projectsGrid}>
             {projects.map((project) => (
-              <li key={project.id} className={styles.projectItem}>
-                {project.image_url && (
-                  <img src={project.image_url} alt={project.title} className={styles.projectImage} />
-                )}
+              <li key={project.id} className={styles.projectCard}>
                 <h3 className={styles.projectTitle}>{project.title}</h3>
                 <p className={styles.projectDescription}>{project.description}</p>
-                <div className={styles.paymentSection}>
-                  {project.project_type && project.project_type.toLowerCase() === 'website' && project.website_url ? (
-                    <button
-                      onClick={() => handleVisitWebsite(project)}
-                      className={`${styles.paymentButton} ${styles.websiteButton}`}
-                    >
-                      Visit Website
-                    </button>
-                  ) : project.project_type && project.project_type.toLowerCase() === 'program' ? (
-                    project.price > 0 ? (
+                {project.image_url && (
+                  <img
+                    src={project.image_url}
+                    alt={project.title}
+                    className={styles.projectImage}
+                  />
+                )}
+                <div className={styles.actions}>
+                  {project.is_paid_project ? (
+                    project.download_link ? (
                       <>
                         <button
                           onClick={() => handleStripePayment(project)}
@@ -232,15 +180,15 @@ function Portfolio() {
                         </button>
                       </>
                     ) : (
-                      <button
-                        onClick={() => handleFreeDownload(project)}
-                        className={`${styles.paymentButton} ${styles.downloadButton}`}
-                      >
-                        Download Free
-                      </button>
+                      <p>Link coming soon.</p>
                     )
                   ) : (
-                    <p>Link coming soon.</p>
+                    <button
+                      onClick={() => handleFreeDownload(project)}
+                      className={`${styles.paymentButton} ${styles.downloadButton}`}
+                    >
+                      Download Free
+                    </button>
                   )}
                 </div>
               </li>
