@@ -1,1 +1,25 @@
-.env
+# Python compiled files
+__pycache__/
+*.py[cod]
+
+# Virtual environment folder
+env/
+venv/
+ENV/
+
+# SQLite database file
+db.sqlite3
+
+# Django migrations cache
+*.log
+*.pot
+*.pyc
+
+# Media files (user uploads)
+media/
+
+# VSCode workspace settings
+.vscode/
+
+# MacOS files
+.DS_Store
