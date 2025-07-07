@@ -39,20 +39,18 @@ function BlogPage() {
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Blog</h1>
-
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           Error: {error}
         </div>
       )}
-
+  
       {posts.length === 0 && !error && <p>No blog posts found.</p>}
-
+  
       {posts.map(post => (
         <div key={post.id} className="mb-6 p-4 border shadow-sm rounded bg-white">
           <h2 className="text-xl font-semibold mb-2">{post.title}</h2>
-
+  
           {post.image && (
             <img
               src={post.image}
@@ -60,9 +58,9 @@ function BlogPage() {
               className="w-full max-h-96 object-cover mb-2 rounded"
             />
           )}
-
+  
           <p className="text-gray-800 whitespace-pre-wrap">{post.content}</p>
-
+  
           <p className="text-sm text-gray-500 mt-2">
             Posted on: {new Date(post.created_at).toLocaleDateString()}
           </p>
@@ -70,6 +68,7 @@ function BlogPage() {
       ))}
     </div>
   );
+  
 }
 
 export default BlogPage;
