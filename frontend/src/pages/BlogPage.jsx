@@ -3,72 +3,67 @@ import '../styles/BlogPage.css';
 
 function BlogPage() {
   const [posts, setPosts] = useState([]);
+  const [expandedPostId, setExpandedPostId] = useState(null);
   const [error, setError] = useState(null);
 
-  // 🔁 Live Render endpoint
   const API_URL = 'https://website3-ho1y.onrender.com/api/blog/posts/';
 
   useEffect(() => {
-    console.log("Trying to fetch blog posts...");
-
-    fetch(API_URL, {
-      credentials: 'include'  // optional, only needed if auth/session required
-    })
+    fetch(API_URL, { credentials: 'include' })
       .then(res => {
-        console.log("Response status:", res.status);
-        if (!res.ok) {
-          throw new Error(`Failed to fetch posts: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`Failed to fetch posts: ${res.status}`);
         return res.json();
       })
       .then(data => {
-        console.log("Fetched blog posts:", data);
-        if (Array.isArray(data)) {
-          setPosts(data);
-        } else {
-          console.warn("Unexpected response structure:", data);
-          setPosts([]);
-        }
+        if (Array.isArray(data)) setPosts(data);
+        else setPosts([]);
       })
       .catch(err => {
         console.error("Fetch error:", err.message);
         setError(err.message);
-        setPosts([]);
       });
   }, []);
 
+  const toggleReadMore = (id) => {
+    setExpandedPostId(prev => (prev === id ? null : id));
+  };
+
   return (
-    <div className="p-4 max-w-4xl mx-auto">
+    <div className="blog-container">
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          Error: {error}
-        </div>
+        <div className="error-box">Error: {error}</div>
       )}
-  
+
       {posts.length === 0 && !error && <p>No blog posts found.</p>}
-  
-      {posts.map(post => (
-        <div key={post.id} className="mb-6 p-4 border shadow-sm rounded bg-white">
-          <h2 className="text-xl font-semibold mb-2">{post.title}</h2>
-  
-          {post.image && (
-            <img
-              src={post.image}
-              alt={post.title}
-              className="w-full max-h-96 object-cover mb-2 rounded"
-            />
-          )}
-  
-          <p className="text-gray-800 whitespace-pre-wrap">{post.content}</p>
-  
-          <p className="text-sm text-gray-500 mt-2">
-            Posted on: {new Date(post.created_at).toLocaleDateString()}
-          </p>
-        </div>
-      ))}
+
+      {posts.map(post => {
+        const isExpanded = expandedPostId === post.id;
+        const preview = post.content.slice(0, 300);
+
+        return (
+          <div key={post.id} className="blog-post">
+            <h2>{post.title}</h2>
+
+            {post.image && (
+              <img src={post.image} alt={post.title} />
+            )}
+
+            <p className="blog-content">
+              {isExpanded ? post.content : `${preview}${post.content.length > 300 ? '...' : ''}`}
+            </p>
+
+            {post.content.length > 300 && (
+              <button onClick={() => toggleReadMore(post.id)} className="read-more-btn">
+                {isExpanded ? 'Read Less' : 'Read More'}
+              </button>
+            )}
+
+            <small>{new Date(post.created_at).toLocaleDateString()}</small>
+          </div>
+        );
+      })}
     </div>
   );
-  
 }
 
 export default BlogPage;
