@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-import { AuthProvider } from './context/AuthContext'; // ✅ Import your context
+import { AuthProvider } from './context/AuthContext'; 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ScrollToHash from './components/ScrollToHash';
@@ -18,10 +18,11 @@ import Register from './pages/Register';
 import Login from './pages/Login';
 import PasswordResetRequest from './pages/PasswordResetRequest';
 import PasswordResetConfirm from './pages/PasswordResetConfirm';
+import BlogPage from './pages/BlogPage';
 
 function App() {
   return (
-    <AuthProvider> {/* ✅ Wrap everything inside AuthProvider */}
+    <AuthProvider> 
       <Router>
         <ScrollToHash />
         <Navbar />
@@ -34,6 +35,7 @@ function App() {
           <Route path="/terms-policy" element={<TermsPolicy />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/payment-cancel" element={<PaymentCancel />} />
+          <Route path="/blog" element={<BlogPage />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/request-password-reset" element={<PasswordResetRequest />} />

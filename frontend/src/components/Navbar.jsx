@@ -36,6 +36,11 @@ function Navbar() {
           </NavLink>
         </li>
         <li>
+          <NavLink to="/blog" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+            Blog
+          </NavLink>
+        </li>
+        <li>
           <NavLink to="/automation" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
             Automation
           </NavLink>

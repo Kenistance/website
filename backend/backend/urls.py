@@ -29,9 +29,10 @@ urlpatterns = [
     path('api/portfolio/', include('portfolio.urls')),
     path('api/enquiry/', include('enquiry.urls')),
     path('api/chat/', include('chat.urls')),
-    path('api/requests/', include('project_requests.urls')), # Confirmed this refers to project_requests
+    path('api/requests/', include('project_requests.urls')),
     path('api/payments/', include('payments.urls')),
-    path('api/users/', include('users.urls')), # ADDED: Include URLs from the users app
+    path('api/users/', include('users.urls')), 
+    path('api/blog/', include('blog.urls')),
 ]
 
 if settings.DEBUG:

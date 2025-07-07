@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'project_requests',
     'payments',
     'users',
+    'blog',
 ]
 
 MIDDLEWARE = [

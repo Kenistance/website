@@ -503,3 +503,39 @@ Traceback (most recent call last):
     return self.connection.commit()
            ~~~~~~~~~~~~~~~~~~~~~~^^
 django.db.utils.IntegrityError: FOREIGN KEY constraint failed
+WARNING 2025-06-08 15:37:05,890 log 8524 10568 Not Found: /favicon.ico
+WARNING 2025-07-06 18:04:11,949 log 5900 5816 Not Found: /favicon.ico
+WARNING 2025-07-06 18:17:31,233 log 5900 10320 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:17:31,259 log 5900 10320 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:17:56,349 log 5900 5608 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:17:56,358 log 5900 5608 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:17:59,868 log 5900 10020 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:17:59,878 log 5900 10020 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:18:05,692 log 5900 9828 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:18:05,705 log 5900 9828 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:18:43,393 log 5900 10356 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:18:43,408 log 5900 7944 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:18:44,429 log 5900 7944 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:18:44,438 log 5900 7944 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:18:45,302 log 5900 7944 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:18:45,309 log 5900 7944 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:18:46,097 log 5900 7944 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:18:46,110 log 5900 7944 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:18:46,915 log 5900 7944 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:18:46,931 log 5900 7944 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:18:47,733 log 5900 7944 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:18:47,744 log 5900 7944 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:18:48,824 log 5900 6372 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:18:48,833 log 5900 6372 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:18:49,650 log 5900 6372 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:18:49,667 log 5900 6372 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:21:35,580 log 5900 5668 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:21:35,599 log 5900 5668 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:21:38,933 log 5900 4044 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:21:38,941 log 5900 4044 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:21:47,634 log 5900 4044 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:21:47,662 log 5900 4044 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:22:31,869 log 5900 10544 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:22:31,874 log 5900 10544 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:22:35,803 log 5900 10544 Unauthorized: /api/blog/posts/
+WARNING 2025-07-06 18:22:35,818 log 5900 10544 Unauthorized: /api/blog/posts/
